@@ -190,7 +190,7 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7
 function defaults(){
   const p1 = uid(), p2 = uid(), p3 = uid();
   return {
-    v:1, name:"Alou",
+    v:2, name:"Alou",
     projects:[
       {id:p1, name:"Mon entreprise", cat:"ent", color:COLORS[0]},
       {id:p2, name:"Sport", cat:"sport", color:COLORS[1]},
@@ -204,8 +204,8 @@ function defaults(){
     apps:[
       {id:uid(), name:"Binvio", url:"", color:"#5b8cff"},
       {id:uid(), name:"My Gym", url:"", color:"#3ddc97"},
-      {id:uid(), name:"Calendrier", url:"calshow://", color:"#ff5f57"},
-      {id:uid(), name:"Rappels", url:"x-apple-reminderkit://", color:"#ffb547"}
+      {id:uid(), name:"G Calendar", url:"https://calendar.google.com/calendar/r", color:"#ff5f57"},
+      {id:uid(), name:"Le brief", url:"", color:"#ffb547"}
     ],
     log:[] // {taskId, date} : historique des tâches cochées
   };
@@ -215,6 +215,13 @@ function load(){
   try{ const raw = localStorage.getItem(KEY); S = raw ? JSON.parse(raw) : defaults(); }
   catch(e){ S = defaults(); }
   S.log = S.log || [];
+  if((S.v||1) < 2){ // v2 : Google Calendar à la place de Calendrier, "Le brief" à la place de Rappels
+    S.apps = S.apps.filter(a=>a.name!=="Rappels");
+    const cal = S.apps.find(a=>a.name==="Calendrier");
+    if(cal){ cal.name="G Calendar"; cal.url="https://calendar.google.com/calendar/r"; }
+    if(!S.apps.some(a=>a.name==="Le brief")) S.apps.push({id:uid(), name:"Le brief", url:"", color:"#ffb547"});
+    S.v = 2;
+  }
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 
