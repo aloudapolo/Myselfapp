@@ -184,7 +184,7 @@ async function binvioSummary(db) {
     const net = "(montant_centimes - COALESCE(remise_centimes, 0))";
     const r = await all(`SELECT payee, COUNT(*) AS n, COALESCE(SUM(${net}), 0) AS centimes FROM factures GROUP BY payee`);
     const get = (p) => { const x = r.find((v) => v.payee === p); return { n: x ? x.n : 0, centimes: x ? x.centimes : 0 }; };
-    const m = await one(`SELECT COALESCE(SUM(${net}), 0) AS centimes FROM factures WHERE payee = 1 AND substr(paye_le, 1, 7) = strftime('%Y-%m', 'now')`);
+    const m = await one(`SELECT COALESCE(SUM(${net}), 0) AS centimes FROM factures WHERE payee = 1 AND substr(COALESCE(paye_le, date_facture), 1, 7) = strftime('%Y-%m', 'now')`);
     const rel = await all(`SELECT f.id, f.numero, c.entreprise AS entreprise, ${net} AS centimes, f.date_facture AS dateFacture,
       (substr(f.date_facture, 1, 10) <= date('now', '-7 day')) AS aRelancer
       FROM factures f LEFT JOIN comptes c ON c.id = f.compte_id WHERE f.payee = 0 ORDER BY f.id DESC LIMIT 30`);
