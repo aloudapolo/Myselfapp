@@ -190,7 +190,7 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7
 function defaults(){
   const p1 = uid(), p2 = uid(), p3 = uid();
   return {
-    v:2, name:"Alou",
+    v:3, name:"Alou",
     projects:[
       {id:p1, name:"Mon entreprise", cat:"ent", color:COLORS[0]},
       {id:p2, name:"Sport", cat:"sport", color:COLORS[1]},
@@ -202,10 +202,10 @@ function defaults(){
       {id:uid(), title:"Définir les 3 objectifs du mois", date:addDays(today(),1), time:null, projectId:p1, priority:2, repeat:"none", notes:"", done:false, createdAt:Date.now()}
     ],
     apps:[
-      {id:uid(), name:"Binvio", url:"", color:"#5b8cff"},
-      {id:uid(), name:"My Gym", url:"", color:"#3ddc97"},
+      {id:uid(), name:"Binvio", url:"https://claude.ai/artifact/2KYiUzdHqKFf2c5wZtrkBN", color:"#5b8cff"},
+      {id:uid(), name:"My Gym", url:"https://claude.ai/artifact/AFwzvt5yTTquoUn8qCnaYN", color:"#3ddc97"},
       {id:uid(), name:"G Calendar", url:"https://calendar.google.com/calendar/r", color:"#ff5f57"},
-      {id:uid(), name:"Le brief", url:"", color:"#ffb547"}
+      {id:uid(), name:"Le brief", url:"https://claude.ai/artifact/GNRMirUWzfNTtBYnSSuqE2", color:"#ffb547"}
     ],
     log:[] // {taskId, date} : historique des tâches cochées
   };
@@ -221,6 +221,11 @@ function load(){
     if(cal){ cal.name="G Calendar"; cal.url="https://calendar.google.com/calendar/r"; }
     if(!S.apps.some(a=>a.name==="Le brief")) S.apps.push({id:uid(), name:"Le brief", url:"", color:"#ffb547"});
     S.v = 2;
+  }
+  if(S.v < 3){ // v3 : liens directs vers Binvio, My Gym et Le brief (sans écraser un lien déjà saisi)
+    const links = {"Binvio":"https://claude.ai/artifact/2KYiUzdHqKFf2c5wZtrkBN","My Gym":"https://claude.ai/artifact/AFwzvt5yTTquoUn8qCnaYN","Le brief":"https://claude.ai/artifact/GNRMirUWzfNTtBYnSSuqE2"};
+    S.apps.forEach(a=>{ if(!a.url && links[a.name]) a.url = links[a.name]; });
+    S.v = 3;
   }
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
