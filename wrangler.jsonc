@@ -1,7 +1,22 @@
 {
   "name": "myselfapp",
+  "main": "src/index.js",
   "compatibility_date": "2026-10-01",
   "assets": {
-    "directory": "./public"
-  }
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "myself",
+      "database_id": "94709d74-0825-42a9-aa60-69429557540c"
+    },
+    {
+      "binding": "BINVIO",
+      "database_name": "binvio-demandes",
+      "database_id": "2cc96a38-644d-4d6c-ac02-07aec0ea329e"
+    }
+  ]
 }

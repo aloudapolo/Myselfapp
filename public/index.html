@@ -96,7 +96,30 @@ h2 button{color:var(--tx2);font-size:13px;text-transform:none;letter-spacing:0;f
 .app.add .ic{background:var(--s2);color:var(--tx2);border:1px dashed var(--s3)}
 .app span{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .app{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-.app .ic{position:relative}
+.app .ic{position:relative;overflow:visible}
+.app .ic img{width:100%;height:100%;border-radius:16px;object-fit:cover;display:block}
+.app .ic.has-img{background:none!important}
+#lock{position:fixed;inset:0;z-index:100;background:#000;display:grid;place-items:center;padding:24px}
+.lockbox{width:100%;max-width:360px;text-align:center}
+.lockbox h1{font-size:34px;margin:0 0 6px}
+.lockbox p{color:var(--tx2);margin:0 0 18px;font-size:15px}
+.lockbox .inp{margin-bottom:10px;text-align:center}
+.lockbox .err{color:#ff8a84;min-height:22px;margin:4px 0 8px;font-size:14px}
+#appview{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column}
+#appview .avbar{display:flex;align-items:center;gap:6px;padding:calc(var(--sat) + 4px) 8px 4px;border-bottom:1px solid var(--line);flex:none}
+#appview .avbar .t{flex:1;font-weight:600;font-size:17px;text-align:center}
+#appview .avbar button{min-height:44px;min-width:64px;padding:0 10px;color:var(--tx2);font-size:16px}
+#appview iframe{flex:1;border:0;width:100%;background:#fff}
+#appview .scroll{flex:1;overflow-y:auto;padding:16px 16px calc(var(--sab) + 24px);max-width:560px;width:100%;margin:0 auto}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--s1);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.kpi b{display:block;font-size:30px;line-height:1.1;font-weight:700;letter-spacing:-.02em}
+.kpi span{color:var(--tx3);font-size:13px}
+.kpi.warn b{color:var(--warn)}
+.kpi.good b{color:var(--ok)}
+.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--s3);color:var(--tx2);white-space:nowrap}
+.drow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+.drow:last-child{border-bottom:0}
 .editing .app:not(.add) .ic::after{content:"✎";position:absolute;right:-6px;top:-6px;width:24px;height:24px;border-radius:50%;background:var(--tx);color:#000;display:grid;place-items:center;font-size:13px;font-weight:700}
 
 
@@ -175,6 +198,9 @@ input[type=date].inp,input[type=time].inp{display:block;min-width:0}
 <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastBtn">Annuler</button></div>
 <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+<input type="file" id="iconFile" accept="image/*" class="hidden">
+<div id="lock" class="hidden"></div>
+<div id="appview" class="hidden"></div>
 
 <script>
 "use strict";
@@ -194,7 +220,7 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7
 function defaults(){
   const p1 = uid(), p2 = uid(), p3 = uid();
   return {
-    v:4, name:"Alou",
+    v:5, name:"Alou",
     projects:[
       {id:p1, name:"Mon entreprise", cat:"ent", color:COLORS[0]},
       {id:p2, name:"Sport", cat:"sport", color:COLORS[1]},
@@ -206,10 +232,10 @@ function defaults(){
       {id:uid(), title:"Définir les 3 objectifs du mois", date:addDays(today(),1), time:null, projectId:p1, priority:2, repeat:"none", notes:"", done:false, createdAt:Date.now()}
     ],
     apps:[
-      {id:uid(), name:"Binvio", url:"https://binvio.binvio.workers.dev/", color:"#5b8cff"},
-      {id:uid(), name:"My Gym", url:"https://claude.ai/artifact/AFwzvt5yTTquoUn8qCnaYN", color:"#3ddc97"},
-      {id:uid(), name:"G Calendar", url:"https://calendar.google.com/calendar/r", color:"#ff5f57"},
-      {id:uid(), name:"Le brief", url:"https://claude.ai/artifact/GNRMirUWzfNTtBYnSSuqE2", color:"#ffb547"}
+      {id:uid(), name:"Binvio", url:"https://binvio.binvio.workers.dev/", kind:"binvio", icon:"/icons/binvio.svg", color:"#5b8cff"},
+      {id:uid(), name:"My Gym", url:"/apps/mygym.html", kind:"embed", icon:"/icons/mygym.svg", color:"#3ddc97"},
+      {id:uid(), name:"G Calendar", url:"https://calendar.google.com/calendar/r", icon:"/icons/calendar.svg", color:"#ff5f57"},
+      {id:uid(), name:"Le brief", url:"/apps/brief.html", kind:"embed", icon:"/icons/lebrief.svg", color:"#ffb547"}
     ],
     log:[] // {taskId, date} : historique des tâches cochées
   };
@@ -218,6 +244,9 @@ let S;
 function load(){
   try{ const raw = localStorage.getItem(KEY); S = raw ? JSON.parse(raw) : defaults(); }
   catch(e){ S = defaults(); }
+  migrate();
+}
+function migrate(){
   S.log = S.log || [];
   if((S.v||1) < 2){ // v2 : Google Calendar à la place de Calendrier, "Le brief" à la place de Rappels
     S.apps = S.apps.filter(a=>a.name!=="Rappels");
@@ -236,8 +265,91 @@ function load(){
     if(b && (!b.url || b.url.includes("claude.ai/artifact/2KYiUzdHqKFf2c5wZtrkBN"))) b.url = "https://binvio.binvio.workers.dev/";
     S.v = 4;
   }
+  if(S.v < 5){ // v5 : MyGym et Le brief dans le dashboard, écran Binvio, icônes
+    const ICONS = {"Binvio":"/icons/binvio.svg","My Gym":"/icons/mygym.svg","G Calendar":"/icons/calendar.svg","Le brief":"/icons/lebrief.svg"};
+    S.apps.forEach(a=>{
+      if(!a.icon && ICONS[a.name]) a.icon = ICONS[a.name];
+      if(a.name==="Binvio") a.kind = "binvio";
+      if(a.name==="My Gym" && (!a.url || a.url.includes("claude.ai/artifact"))){ a.url="/apps/mygym.html"; a.kind="embed"; }
+      if(a.name==="Le brief" && (!a.url || a.url.includes("claude.ai/artifact"))){ a.url="/apps/brief.html"; a.kind="embed"; }
+    });
+    S.v = 5;
+  }
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function saveLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function save(){ S.savedAt = Date.now(); saveLocal(); schedulePush(); }
+
+/* ============ Compte et synchro ============ */
+const TOKEN_KEY = "myself.token";
+const getToken = () => { try{ return localStorage.getItem(TOKEN_KEY); }catch(e){ return null; } };
+const setToken = t => { try{ t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); }catch(e){} };
+let syncState = "local", syncTimer = null;   // local | ok | offline
+async function api(path, opts={}){
+  const t = getToken();
+  if(!t){ const e = new Error("auth"); e.code="auth"; throw e; }
+  const r = await fetch("/api/"+path, {method:opts.method||"GET", body:opts.body, headers:{authorization:"Bearer "+t, ...(opts.body?{"content-type":"application/json"}:{})}});
+  if(r.status===401){ setToken(null); syncState="local"; showLock(); const e = new Error("auth"); e.code="auth"; throw e; }
+  if(r.status===404) return null;
+  if(!r.ok){ const e = new Error("api "+r.status); e.status=r.status; throw e; }
+  return r.json();
+}
+const STATE_PATH = "doc?path="+encodeURIComponent("dashboard/state");
+async function push(){
+  if(!getToken()) return;
+  if(!S.savedAt){ S.savedAt = Date.now(); saveLocal(); }
+  await api(STATE_PATH, {method:"PUT", body:JSON.stringify({data:S})});
+  syncState = "ok";
+}
+function schedulePush(){
+  clearTimeout(syncTimer);
+  if(!getToken()) return;
+  syncTimer = setTimeout(()=>push().catch(e=>{ if(e.code!=="auth") syncState="offline"; }), 800);
+}
+async function pull(){
+  if(!getToken()) return;
+  try{
+    const r = await api(STATE_PATH);
+    if(r && r.data && (r.data.savedAt||0) > (S.savedAt||0)){ S = r.data; migrate(); saveLocal(); render(); syncState="ok"; }
+    else if(!r || (S.savedAt||0) > (r.data.savedAt||0)) await push();
+    else syncState = "ok";
+  }catch(e){ if(e.code!=="auth") syncState = "offline"; }
+}
+
+/* ============ Écran de code ============ */
+async function showLock(){
+  const box = $("#lock"); box.classList.remove("hidden");
+  box.innerHTML = '<div class="lockbox"><h1>Myself</h1><p>Chargement…</p></div>';
+  let configured;
+  try{ const r = await fetch("/api/status"); configured = (await r.json()).configured; }
+  catch(e){
+    box.innerHTML = '<div class="lockbox"><h1>Myself</h1><p>Pas de connexion pour le moment. Tu peux utiliser l\'appli sans synchro.</p><button class="btn" data-act="lockSkip">Continuer sans synchro</button></div>';
+    return;
+  }
+  box.innerHTML = `<div class="lockbox"><h1>Myself</h1>
+    <p>${configured ? "Entre ton code pour synchroniser et ouvrir tes apps." : "Choisis ton code (8 caractères minimum). Il protège tes données en ligne : MyGym, le brief, Binvio."}</p>
+    <input class="inp big" id="lockCode" type="password" placeholder="Ton code" autocomplete="${configured?"current-password":"new-password"}" enterkeyhint="done">
+    ${configured?"":'<input class="inp big" id="lockCode2" type="password" placeholder="Répète le code" autocomplete="new-password" enterkeyhint="done">'}
+    <div class="err" id="lockErr"></div>
+    <button class="btn" data-act="lockSubmit" data-mode="${configured?"login":"setup"}">${configured?"Entrer":"Créer mon code"}</button>
+    <button class="btn ghost" data-act="lockSkip" style="margin-top:10px">Continuer sans synchro</button></div>`;
+  box.querySelectorAll("input").forEach(i=>i.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); box.querySelector("[data-act=lockSubmit]").click(); }}));
+}
+async function lockSubmit(mode){
+  const code = $("#lockCode").value, err = $("#lockErr");
+  if(code.length < 8){ err.textContent = "8 caractères minimum."; return; }
+  if(mode==="setup" && code !== $("#lockCode2").value){ err.textContent = "Les deux codes ne sont pas identiques."; return; }
+  err.textContent = "…";
+  try{
+    const r = await fetch("/api/"+mode, {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({code})});
+    const d = await r.json().catch(()=>({}));
+    if(r.status===429){ err.textContent = "Trop d'essais. Réessaie dans "+(d.retryIn||60)+" s."; return; }
+    if(r.status===401){ err.textContent = "Code incorrect."; return; }
+    if(r.status===409 && mode==="setup"){ showLock(); return; }
+    if(!r.ok || !d.token){ err.textContent = "Erreur, réessaie."; return; }
+    setToken(d.token); $("#lock").classList.add("hidden"); $("#lock").innerHTML = "";
+    await pull(); render();
+  }catch(e){ err.textContent = "Pas de connexion."; }
+}
 
 /* ============ Dates ============ */
 function iso(d){ const z=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate()); }
@@ -317,7 +429,9 @@ function projStats(p){
   return {left: all.length-done, pct: all.length? done/all.length : 0};
 }
 function appTile(a){
-  return `<button class="app" data-app="${a.id}"><div class="ic" style="background:${a.color}">${esc(a.name.trim()[0]||"?").toUpperCase()}</div><span>${esc(a.name)}</span></button>`;
+  const ic = a.icon ? `<div class="ic has-img"><img src="${esc(a.icon)}" alt=""></div>`
+                    : `<div class="ic" style="background:${a.color}">${esc(a.name.trim()[0]||"?").toUpperCase()}</div>`;
+  return `<button class="app" data-app="${a.id}">${ic}<span>${esc(a.name)}</span></button>`;
 }
 
 function renderHome(){
@@ -549,13 +663,24 @@ function saveProject(id){
   save(); closeSheet(); render();
 }
 
+let iconDraft = "";
+function iconPreview(a, icon){
+  return icon ? `<img src="${esc(icon)}" alt="" style="width:60px;height:60px;border-radius:16px;object-fit:cover">`
+              : `<div style="width:60px;height:60px;border-radius:16px;background:${a.color};color:#000;display:grid;place-items:center;font-size:24px;font-weight:700">${esc((a.name||"?").trim()[0]||"?").toUpperCase()}</div>`;
+}
 function appSheet(id){
   const a = id ? S.apps.find(x=>x.id===id) : {name:"",url:"",color:COLORS[5]};
+  iconDraft = a.icon || "";
   openSheet(`
     <h3>${id?"Modifier l'app":"Ajouter une app"} <button data-act="close">Fermer</button></h3>
     <div class="field"><label>Nom</label><input class="inp" id="aName" placeholder="Ex. Binvio" value="${esc(a.name)}" autocomplete="off"></div>
     <div class="field"><label>Lien</label><input class="inp" id="aUrl" placeholder="https://… ou monapp://" value="${esc(a.url)}" inputmode="url" autocapitalize="off" autocorrect="off">
       <p class="hint">Un lien web ouvre la page, un lien d'app (ex. calshow://) ouvre l'app installée.</p></div>
+    <div class="field"><label>Icône</label>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span id="iconPrev">${iconPreview(a, iconDraft)}</span>
+        <button type="button" class="chip" data-act="pickIcon">Choisir une image</button>
+        <button type="button" class="chip" data-act="clearIcon">Retirer</button></div>
+      <p class="hint">Une photo ou un PNG de ton téléphone.</p></div>
     <div class="field"><label>Couleur</label><div class="colors" data-group="color">${COLORS.map(c=>`<button type="button" class="chip${c===a.color?" on":""}" data-val="${c}" style="background:${c};padding:0;width:40px;height:40px;min-height:40px;border:3px solid ${c===a.color?"#fff":"transparent"}" aria-label="Couleur"></button>`).join("")}</div></div>
     <button class="btn" data-act="saveApp" data-id="${id||""}">Enregistrer</button>
     ${id?`<button class="btn danger" data-act="delApp" data-id="${id}">Retirer cette app</button>`:""}
@@ -565,14 +690,95 @@ function saveApp(id){
   const name=$("#aName").value.trim(); if(!name){ $("#aName").focus(); return; }
   let url=$("#aUrl").value.trim();
   if(url && !/^[a-z][a-z0-9+.-]*:/i.test(url)) url="https://"+url;
-  const data={name,url,color:groupVal("color")||COLORS[5]};
+  const data={name,url,color:groupVal("color")||COLORS[5],icon:iconDraft||undefined};
   if(id) Object.assign(S.apps.find(x=>x.id===id), data); else S.apps.push({id:uid(),...data});
   save(); closeSheet(); render();
 }
+function openExternal(url){
+  const l=document.createElement("a"); l.href=url; l.target="_blank"; l.rel="noopener";
+  document.body.appendChild(l); l.click(); l.remove();
+}
 function openApp(id){
   const a=S.apps.find(x=>x.id===id); if(!a) return;
+  if(a.kind==="binvio" || (a.kind==="embed" && a.url.startsWith("/"))) return openAppView(a);
   if(!a.url){ appSheet(id); toast("Ajoute le lien de "+a.name, false); return; }
-  window.location.href = a.url;
+  openExternal(a.url);
+}
+function openAppView(a){
+  if(!getToken()){ showLock(); return; }
+  const v=$("#appview"); v.classList.remove("hidden");
+  const bar = `<div class="avbar"><button data-act="closeAppView">‹ Retour</button><div class="t">${esc(a.name)}</div><span style="min-width:64px"></span></div>`;
+  if(a.kind==="embed") v.innerHTML = bar + `<iframe src="${esc(a.url)}" title="${esc(a.name)}" allow="clipboard-write"></iframe>`;
+  else { v.innerHTML = bar + '<div class="scroll" id="bvBody"><p class="hint">Chargement des chiffres…</p></div>'; loadBinvio(a); }
+}
+function closeAppView(){ const v=$("#appview"); v.classList.add("hidden"); v.innerHTML=""; }
+
+/* ---- Binvio : chiffres lus en lecture seule dans ta base Binvio ---- */
+const eur = c => ((c||0)/100).toLocaleString("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:2});
+function niceDate(str){
+  if(!str) return "";
+  const d = new Date(String(str).replace(" ","T"));
+  return isNaN(d) ? String(str) : d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
+}
+let lastBinvio = 0;
+async function syncBinvioTasks(d){
+  const list = (d.factures && d.factures.relances) || [];
+  S.autoKeys = S.autoKeys || {};
+  const ent = S.projects.find(p=>p.cat==="ent");
+  let changed = false;
+  list.forEach(f=>{
+    const key = "binvio:facture:"+f.id;
+    if(!f.aRelancer || S.autoKeys[key]) return;
+    S.autoKeys[key] = true;
+    S.tasks.push({id:uid(), key, title:"Relancer "+(f.entreprise||"un client")+" : facture "+(f.numero||f.id)+" ("+eur(f.centimes)+")",
+      date:today(), time:null, projectId:ent?ent.id:null, priority:1, repeat:"none", notes:"Tâche créée automatiquement par Binvio.", done:false, createdAt:Date.now()});
+    changed = true;
+  });
+  const impayees = new Set(list.map(f=>f.id));
+  S.tasks.forEach(t=>{
+    if(t.key && t.key.indexOf("binvio:facture:")===0 && !t.done && !impayees.has(Number(t.key.split(":")[2]))){ t.done=true; t.doneAt=Date.now(); changed=true; }
+  });
+  if(changed){ save(); render(); }
+}
+async function refreshBinvio(){
+  if(!getToken() || Date.now()-lastBinvio < 30*60*1000) return;
+  lastBinvio = Date.now();
+  try{ syncBinvioTasks(await api("binvio")); }catch(e){ lastBinvio = 0; }
+}
+async function loadBinvio(a){
+  const body = $("#bvBody"); if(!body) return;
+  try{
+    const d = await api("binvio");
+    lastBinvio = Date.now();
+    renderBinvio(a, d); syncBinvioTasks(d);
+  }catch(e){
+    if(e.code==="auth") return;
+    body.innerHTML = `<div class="card"><div class="empty"><b>${e.status===503?"Binvio n'est pas encore relié":"Impossible de charger les chiffres"}</b>Vérifie ta connexion puis réessaie.</div></div>
+      <button class="btn ghost" data-act="binvioReload" style="margin-top:14px">Réessayer</button>`;
+  }
+}
+function renderBinvio(a, d){
+  const body = $("#bvBody"); if(!body) return;
+  const dem=d.demandes||{}, cpt=d.comptes||{}, fac=d.factures||{};
+  const relances=(fac.relances||[]).filter(f=>f.aRelancer);
+  const kpi=(cls,val,label)=>`<div class="kpi ${cls}"><b>${val}</b><span>${label}</span></div>`;
+  body.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><img src="${esc(a.icon||"")}" alt="" style="width:48px;height:48px;border-radius:12px"><div><h1 style="font-size:26px;margin:0">Binvio</h1><div class="sub" style="margin:0">Tes chiffres du jour</div></div></div>
+    <div class="kpis">
+      ${fac.error?"":kpi("good", eur(fac.encaisseMois), "Argent gagné ce mois")}
+      ${fac.error?"":kpi("good", eur(fac.payees&&fac.payees.centimes), "Argent gagné au total")}
+      ${fac.error?"":kpi(fac.impayees&&fac.impayees.n?"warn":"", eur(fac.impayees&&fac.impayees.centimes), "Reste à encaisser ("+((fac.impayees&&fac.impayees.n)||0)+" factures)")}
+      ${fac.error?"":kpi(relances.length?"warn":"", relances.length, "Relances à faire")}
+      ${dem.error?"":kpi("", dem.semaine||0, "Demandes cette semaine")}
+      ${cpt.error?"":kpi("", cpt.actifs||0, "Comptes actifs")}
+    </div>
+    <h2>Relances à faire <span class="pill">tâches ajoutées auto</span></h2>
+    ${relances.length ? `<div class="card">${relances.map(f=>`<div class="drow"><div style="min-width:0"><div style="font-weight:600">${esc(f.entreprise||"Client")}</div><div class="meta"><span>Facture ${esc(f.numero||f.id)} · ${esc(niceDate(f.dateFacture))}</span></div></div><b>${eur(f.centimes)}</b></div>`).join("")}</div>`
+      : `<div class="card"><div class="empty"><b>Aucune relance à faire</b>Toutes les factures sont à jour.</div></div>`}
+    <h2>Dernières demandes</h2>
+    ${(dem.dernieres||[]).length ? `<div class="card">${dem.dernieres.map(r=>`<div class="drow"><div style="min-width:0"><div style="font-weight:600">${esc(r.etab||"")}</div><div class="meta"><span>${esc(niceDate(r.recue_le))}</span></div></div><span class="pill">${esc(r.statut||"")}</span></div>`).join("")}</div>`
+      : `<div class="card"><div class="empty"><b>Aucune demande</b></div></div>`}
+    <div class="btns" style="margin-top:18px"><button class="btn ghost" data-act="binvioReload">Actualiser</button><button class="btn ghost" data-act="binvioSite">Ouvrir le site</button></div>`;
 }
 
 function settingsSheet(){
@@ -580,9 +786,12 @@ function settingsSheet(){
     <h3>Réglages <button data-act="close">Fermer</button></h3>
     <div class="field"><label>Ton prénom</label><input class="inp" id="sName" value="${esc(S.name)}" autocomplete="off"></div>
     <button class="btn" data-act="saveSettings">Enregistrer</button>
+    <h2 style="margin-top:28px">Synchro</h2>
+    <p class="hint" style="margin-top:0">${getToken() ? (syncState==="offline" ? "Hors ligne : tes changements partiront dès que la connexion revient." : "Tes tâches se synchronisent entre tes appareils.") : "Désactivée : tes données restent sur cet appareil."}</p>
+    <button class="btn ghost" data-act="${getToken()?"logout":"login"}">${getToken()?"Se déconnecter":"Se connecter"}</button>
     <h2 style="margin-top:28px">Sauvegarde</h2>
     <div class="btns"><button class="btn ghost" data-act="export">Exporter</button><button class="btn ghost" data-act="import">Importer</button></div>
-    <p class="hint">Tes données restent sur ton iPhone. Exporte de temps en temps pour garder une copie (Fichiers, iCloud Drive).</p>
+    <p class="hint">Exporte de temps en temps pour garder une copie de tes tâches (Fichiers, iCloud Drive).</p>
     <button class="btn danger" data-act="reset" style="margin-top:18px">Tout effacer</button>
   `);
 }
@@ -635,6 +844,15 @@ document.addEventListener("click", e=>{
     case "closeProject": openProject=null; return render();
     case "newApp": return appSheet();
     case "toggleEditApps": editApps=!editApps; return render();
+    case "lockSubmit": return lockSubmit(el.dataset.mode);
+    case "lockSkip": $("#lock").classList.add("hidden"); $("#lock").innerHTML=""; return;
+    case "login": closeSheet(); return showLock();
+    case "logout": (async()=>{ try{ await fetch("/api/logout",{method:"POST",headers:{authorization:"Bearer "+getToken()}}); }catch(e){} setToken(null); syncState="local"; closeSheet(); showLock(); })(); return;
+    case "closeAppView": return closeAppView();
+    case "binvioReload": { const a=S.apps.find(x=>x.kind==="binvio"); if(a){ $("#bvBody").innerHTML='<p class="hint">Chargement des chiffres…</p>'; loadBinvio(a); } return; }
+    case "binvioSite": { const a=S.apps.find(x=>x.kind==="binvio"); if(a&&a.url) openExternal(a.url); return; }
+    case "pickIcon": return $("#iconFile").click();
+    case "clearIcon": iconDraft=""; $("#iconPrev").innerHTML=iconPreview({name:$("#aName").value,color:groupVal("color")||COLORS[5]}, ""); return;
     case "saveApp": return saveApp(el.dataset.id||null);
     case "delApp": S.apps=S.apps.filter(a=>a.id!==id); save(); closeSheet(); return render();
     case "export": return download(new Blob([JSON.stringify(S,null,2)],{type:"application/json"}), `myself-${today()}.json`);
@@ -658,6 +876,21 @@ document.addEventListener("touchstart", e=>{
 ["touchend","touchcancel","touchmove"].forEach(t=>document.addEventListener(t, ()=>clearTimeout(pressTimer),{passive:true}));
 document.addEventListener("contextmenu", e=>{ const a=e.target.closest("[data-app]"); if(a){ e.preventDefault(); appSheet(a.dataset.app); }});
 
+$("#iconFile").onchange = e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  const img=new Image(), url=URL.createObjectURL(f);
+  img.onload=()=>{
+    const c=document.createElement("canvas"); c.width=c.height=128;
+    const m=Math.min(img.width,img.height), sx=(img.width-m)/2, sy=(img.height-m)/2;
+    c.getContext("2d").drawImage(img,sx,sy,m,m,0,0,128,128);
+    URL.revokeObjectURL(url);
+    iconDraft=c.toDataURL("image/png");
+    const prev=$("#iconPrev"); if(prev) prev.innerHTML=iconPreview({name:"",color:COLORS[5]}, iconDraft);
+  };
+  img.onerror=()=>{ URL.revokeObjectURL(url); toast("Image illisible", false); };
+  img.src=url;
+};
+window.addEventListener("message", e=>{ if(e.origin===location.origin && e.data && e.data.type==="myself-auth"){ closeAppView(); showLock(); } });
 $("#fab").onclick = ()=> taskSheet(null, {projectId: view==="projects" ? openProject : (view==="tasks" && filter!=="all" && filter!=="none" ? filter : null)});
 $("#importFile").onchange = async e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -667,9 +900,14 @@ $("#importFile").onchange = async e=>{
 };
 
 // Rafraîchir quand on revient sur l'app (changement de jour, etc.)
-document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) render(); });
+document.addEventListener("visibilitychange", ()=>{
+  if(document.hidden) return;
+  if(!$("#sheet").classList.contains("on") && $("#appview").classList.contains("hidden")){ render(); pull(); }
+  refreshBinvio();
+});
 
-load(); save(); render();
+load(); saveLocal(); render();
+(async()=>{ if(getToken()){ await pull(); refreshBinvio(); } else showLock(); })();
 if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>

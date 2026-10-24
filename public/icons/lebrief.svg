@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect x="44" y="44" width="200" height="200" rx="34" fill="#121110"/>
+<path d="M58 24 H190 L230 64 V196 A34 34 0 0 1 196 230 H58 A34 34 0 0 1 24 196 V58 A34 34 0 0 1 58 24 Z" fill="#FBF7EF" stroke="#121110" stroke-width="8" stroke-linejoin="round"/>
+<path d="M190 24 V50 A14 14 0 0 0 204 64 H230" fill="#E4D5BB" stroke="#121110" stroke-width="8" stroke-linejoin="round"/>
+<text x="124" y="176" text-anchor="middle" font-family="Bricolage Grotesque, Arial Black, Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="118" letter-spacing="-6" fill="#121110">LB</text>
+<rect x="56" y="196" width="138" height="9" rx="4.5" fill="#121110"/></svg>

@@ -1,0 +1,415 @@
+<!doctype html><html><head><script src="/shim.js"></script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Le Brief</title>
+<link rel="icon" href="/icons/lebrief.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : une colonne façon fil d'actu mobile. En-tête + bandeau défilant des titres, cadre noir « L'essentiel », puis une section par thème avec des cartes info. Thème clair unique (charte Outils IA). */
+:root {
+  --cream: #F4ECDD;
+  --paper: #FBF7EF;
+  --beige: #E4D5BB;
+  --ink: #121110;
+  --muted: #645B4C;
+  --shadow: 5px 5px 0 var(--ink);
+  --shadow-up: 8px 8px 0 var(--ink);
+  --ease: cubic-bezier(.2, .9, .25, 1.2);
+  --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --font-body: "Instrument Sans", "Helvetica Neue", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--cream); }
+body { color: var(--ink); font: 16px/1.55 var(--font-body); }
+.wrap { max-width: 720px; margin: 0 auto; padding-inline: 18px; padding-block: 30px 72px; }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+h1 { font: 800 clamp(2.8rem, 12vw, 4.4rem)/0.9 var(--font-display); letter-spacing: -0.035em; margin: 0; animation: drop .7s var(--ease) backwards; }
+h1 em { font-style: normal; display: inline-block; background: var(--ink); color: var(--cream); padding: 0 .18em .06em; border-radius: 10px; transform: rotate(-2deg); margin-top: 6px; }
+/* Logo : même famille que Prompt Assist (tuile + ombre dure), coin corné façon page de journal. */
+.logo { width: clamp(72px, 20vw, 104px); height: auto; flex: none; animation: drop .7s var(--ease) backwards, float 4s ease-in-out .8s infinite; }
+/* Ligne de date façon « une » de journal : jour en tampon noir, date complète, compteur d'infos. */
+.dateline { display: flex; align-items: center; gap: 14px; padding-block: 12px; margin-bottom: 22px; border-block: 2px solid var(--ink); animation: drop .7s var(--ease) .1s backwards; }
+.stamp { display: grid; place-items: center; width: 58px; height: 58px; flex: none; border-radius: 12px; background: var(--ink); color: var(--cream); font: 800 2rem/1 var(--font-display); letter-spacing: -0.04em; transform: rotate(-4deg); box-shadow: 3px 3px 0 var(--beige); font-variant-numeric: tabular-nums; }
+.dl-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dl-day { font: 800 1.35rem/1.05 var(--font-display); letter-spacing: -0.01em; text-transform: capitalize; }
+.dl-month { font: 500 12px/1.3 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.dl-count { margin-left: auto; text-align: right; font: 500 11px/1.4 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.dl-count b { display: block; font: 800 1.35rem/1 var(--font-display); letter-spacing: -0.02em; color: var(--ink); }
+.ticker { background: var(--ink); color: var(--cream); border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; margin-bottom: 26px; box-shadow: var(--shadow); }
+.ticker-track { display: flex; width: max-content; animation: scroll 50s linear infinite; will-change: transform; }
+.ticker span { font: 600 13px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: 11px 0; white-space: nowrap; }
+.ticker i { font-style: normal; display: inline-block; background: var(--cream); color: var(--ink); border-radius: 5px; padding: 3px 6px; margin-right: 8px; }
+.ticker b { color: var(--beige); font-weight: 500; padding-inline: 16px; }
+
+/* L'essentiel */
+.essentiel { background: var(--paper); border: 2px solid var(--ink); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-up); animation: drop .7s var(--ease) .2s backwards; }
+.ess-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--ink); color: var(--cream); padding: 14px 18px; }
+.ess-head h2 { font: 800 1.3rem/1.1 var(--font-display); margin: 0; }
+.ess-head span { font: 500 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--beige); }
+.headline { font: 800 clamp(1.45rem, 5.4vw, 1.9rem)/1.1 var(--font-display); letter-spacing: -0.02em; margin: 0; padding: 16px 18px 4px; text-wrap: balance; }
+.ess-list { list-style: none; margin: 0; padding: 8px 18px 18px; display: grid; gap: 10px; }
+.ess-list li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; }
+.ess-list li::before { content: counter(ess); counter-increment: ess; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--beige); border: 2px solid var(--ink); font: 800 15px/1 var(--font-display); }
+.ess-list { counter-reset: ess; }
+
+/* Navigation par thème */
+.nav { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 10px); z-index: 5; display: flex; gap: 2px; margin: 26px 0 8px; padding: 8px; background: var(--cream); border: 2px solid var(--ink); border-radius: 999px; box-shadow: var(--shadow); overflow-x: auto; scrollbar-width: none; }
+.nav::-webkit-scrollbar { display: none; }
+.nav a { flex: 1 0 auto; text-align: center; font: 600 13.5px/1 var(--font-body); color: var(--ink); text-decoration: none; padding: 10px 9px; border-radius: 999px; border: 2px solid transparent; transition: background .2s, color .2s; }
+.nav a sup { font: 500 10px/1 var(--font-mono); margin-left: 2px; color: var(--muted); }
+.nav a.on { background: var(--ink); color: var(--cream); }
+.nav a.on sup { color: var(--beige); }
+@media (max-width: 460px) { .nav { padding: 6px; } .nav a { padding: 10px 6px; font-size: 13px; } .nav a sup { display: none; } }
+
+section.theme { scroll-margin-top: 90px; padding-top: 26px; }
+.theme-title { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; font: 800 1.9rem/1 var(--font-display); letter-spacing: -0.02em; }
+.theme-title .tag { display: grid; place-items: center; min-width: 46px; height: 46px; padding-inline: 8px; border-radius: 12px; background: var(--ink); color: var(--cream); font-size: 1.1rem; transform: rotate(-3deg); }
+.theme-title::after { content: ""; flex: 1; border-top: 2px dashed var(--beige); }
+.cards { display: grid; gap: 16px; }
+
+.card { background: var(--paper); border: 2px solid var(--ink); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0; transition: transform .2s var(--ease), box-shadow .2s var(--ease); animation: drop .6s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms + 150ms); }
+.card:hover { transform: translate(-3px, -3px); box-shadow: var(--shadow-up); }
+.card h3 { font: 800 1.25rem/1.15 var(--font-display); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.card p { margin: 0; }
+.why { background: var(--beige); border-radius: 10px; padding: 10px 12px; font-size: .95rem; }
+.why strong { display: block; font: 600 11px/1.4 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 2px; }
+.srcs { display: flex; flex-wrap: wrap; gap: 6px; }
+.srcs a { font: 500 12px/1 var(--font-mono); color: var(--ink); text-decoration: none; border: 1.5px solid var(--ink); border-radius: 999px; padding: 6px 10px; transition: background .15s, transform .12s; }
+.srcs a::after { content: " ↗"; }
+.srcs a:hover { background: var(--ink); color: var(--cream); }
+.srcs a:active { transform: translate(2px, 2px); }
+.card-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+
+/* Boutons Écouter / Explique-moi : même gestuelle que Prompt Assist (s'enfoncent au clic). */
+.btn { font: 600 14px/1 var(--font-body); border-radius: 999px; padding: 10px 15px; cursor: pointer; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); box-shadow: 3px 3px 0 var(--ink); transition: transform .12s ease, box-shadow .12s ease, background .2s; }
+.btn:hover { background: var(--beige); }
+.btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+.btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.btn.on { background: var(--ink); color: var(--cream); }
+.ess-head .btn { background: var(--cream); border-color: var(--cream); box-shadow: 3px 3px 0 var(--beige); padding: 9px 14px; }
+.ess-head .btn.on { background: var(--beige); border-color: var(--beige); }
+.xbtn { margin-left: auto; }
+body:not(.has-ai) .xbtn { display: none; }
+
+.explain { border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; animation: drop .45s var(--ease) backwards; }
+.explain .progress { height: 6px; background: repeating-linear-gradient(-45deg, var(--ink) 0 8px, var(--beige) 8px 16px); background-size: 200% 100%; animation: stripes .8s linear infinite; }
+.explain.done .progress { display: none; }
+.explain-text { margin: 0; padding: 12px 14px; font: 14px/1.6 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--cream); }
+.explain-text.wait { color: var(--muted); }
+
+.card.reading { transform: translate(-3px, -3px); box-shadow: var(--shadow-up); background: var(--cream); }
+.card.reading h3::before { content: "▶ "; }
+.essentiel.reading .ess-list { background: var(--cream); }
+
+/* Archives */
+.archive { margin-top: 44px; }
+.archive h2 { font: 800 1.5rem/1 var(--font-display); letter-spacing: -0.02em; margin: 0 0 14px; }
+.days { display: flex; flex-wrap: wrap; gap: 10px; }
+.days button { font: 600 14px/1 var(--font-body); border-radius: 999px; padding: 11px 16px; cursor: pointer; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); box-shadow: 4px 4px 0 var(--ink); transition: transform .12s ease, box-shadow .12s ease, background .2s; }
+.days button:hover { background: var(--beige); }
+.days button:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
+.days button.on { background: var(--ink); color: var(--cream); }
+.days button:focus-visible, .nav a:focus-visible, .srcs a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+.state { background: var(--paper); border: 2px dashed var(--ink); border-radius: 14px; padding: 22px 18px; margin-top: 10px; }
+.state h2 { font: 800 1.3rem/1.1 var(--font-display); margin: 0 0 6px; }
+.state p { margin: 0; color: var(--muted); }
+.loader { height: 6px; margin-top: 14px; border-radius: 3px; background: repeating-linear-gradient(-45deg, var(--ink) 0 8px, var(--beige) 8px 16px); background-size: 200% 100%; animation: stripes .8s linear infinite; }
+
+@keyframes drop { from { transform: translateY(-14px); box-shadow: 0 0 0 var(--ink); } }
+@keyframes float { 50% { transform: translateY(-6px) rotate(3deg); } }
+@keyframes scroll { to { transform: translateX(-50%); } }
+@keyframes stripes { to { background-position: -45px 0; } }
+/* « Réduire les animations » : on garde les animations (demandé), seul le bandeau ralentit. */
+@media (prefers-reduced-motion: reduce) { .ticker-track { animation-duration: 100s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Le<br><em>Brief</em></h1>
+    <svg class="logo" viewBox="0 0 256 256" width="96" height="96" role="img" aria-label="Logo Le Brief"><rect x="44" y="44" width="200" height="200" rx="34" fill="#121110"/><path d="M58 24 H190 L230 64 V196 A34 34 0 0 1 196 230 H58 A34 34 0 0 1 24 196 V58 A34 34 0 0 1 58 24 Z" fill="#FBF7EF" stroke="#121110" stroke-width="8" stroke-linejoin="round"/><path d="M190 24 V50 A14 14 0 0 0 204 64 H230" fill="#E4D5BB" stroke="#121110" stroke-width="8" stroke-linejoin="round"/><text x="124" y="176" text-anchor="middle" font-family="Bricolage Grotesque, Arial Black, Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="118" letter-spacing="-6" fill="#121110">LB</text><rect x="56" y="196" width="138" height="9" rx="4.5" fill="#121110"/></svg>
+  </header>
+
+  <div class="dateline" id="dateline" hidden>
+    <div class="stamp" id="stamp"></div>
+    <div class="dl-text">
+      <span class="dl-day" id="dl-day"></span>
+      <span class="dl-month" id="dl-month"></span>
+    </div>
+    <div class="dl-count"><b id="dl-n"></b>infos</div>
+  </div>
+
+  <div class="ticker" aria-hidden="true" id="ticker" hidden>
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
+
+  <div id="brief"></div>
+
+  <div class="state" id="state">
+    <h2>Le brief arrive</h2>
+    <p>Chargement de l'actu du jour : IA, Finance, Business, France et Bretagne.</p>
+    <div class="loader" aria-hidden="true"></div>
+  </div>
+
+  <section class="archive" id="archive" hidden>
+    <h2>Les jours d'avant</h2>
+    <div class="days" id="days"></div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+const TAGS = { ia: "IA", finance: "€", business: "B", france: "FR", bretagne: "BZH" };
+let briefs = [], current = null;
+
+function parseDate(iso) { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); }
+const fmtShort = (iso) => parseDate(iso).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+
+function showState(title, text, loading = false) {
+  const s = $("state");
+  s.hidden = false;
+  s.replaceChildren(el("h2", null, title), el("p", null, text));
+  if (loading) { const l = el("div", "loader"); l.setAttribute("aria-hidden", "true"); s.append(l); }
+}
+
+function render(b) {
+  stopReading();
+  current = b.date;
+  $("state").hidden = true;
+  const d = parseDate(b.date);
+  $("stamp").textContent = String(d.getDate()).padStart(2, "0");
+  $("dl-day").textContent = d.toLocaleDateString("fr-FR", { weekday: "long" });
+  let sub = d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const up = b.updatedAt ? new Date(b.updatedAt) : null;
+  if (up && !isNaN(up)) sub += " · màj " + up.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).replace(":", "h");
+  $("dl-month").textContent = sub;
+  $("dl-n").textContent = (b.sections || []).reduce((n, sec) => n + (sec.items || []).length, 0);
+  $("dateline").hidden = false;
+
+  // Bandeau : les titres du jour, dupliqués pour une boucle sans couture.
+  const line = () => {
+    const s = el("span");
+    for (const sec of b.sections || []) for (const it of sec.items || []) {
+      s.append(el("i", null, sec.label), document.createTextNode(it.title), el("b", null, "✦"));
+    }
+    return s;
+  };
+  $("ticker-track").replaceChildren(line(), line());
+  $("ticker").hidden = false;
+
+  const root = $("brief");
+  const frag = document.createDocumentFragment();
+
+  const ess = el("section", "essentiel");
+  const head = el("div", "ess-head");
+  head.append(el("h2", null, "L'essentiel"));
+  if (canSpeak) {
+    const lb = el("button", "btn listen", "▶ Écouter");
+    lb.type = "button"; lb.id = "listen";
+    lb.addEventListener("click", () => (speaking ? stopReading() : readAll(b)));
+    head.append(lb);
+  } else head.append(el("span", null, "30 secondes"));
+  const ul = el("ol", "ess-list");
+  for (const t of b.essentiel || []) ul.append(el("li", null, t));
+  ess.append(head);
+  if (b.title) ess.append(el("p", "headline", b.title));
+  ess.append(ul);
+  frag.append(ess);
+
+  const nav = el("nav", "nav");
+  nav.setAttribute("aria-label", "Thèmes");
+  frag.append(nav);
+
+  (b.sections || []).forEach((sec) => {
+    const a = el("a", null, sec.label);
+    a.href = "#" + sec.key;
+    a.dataset.k = sec.key;
+    a.append(el("sup", null, String((sec.items || []).length)));
+    a.addEventListener("click", (ev) => { ev.preventDefault(); $(sec.key)?.scrollIntoView({ behavior: "smooth" }); });
+    nav.append(a);
+
+    const s = el("section", "theme");
+    s.id = sec.key;
+    const h = el("h2", "theme-title");
+    h.append(el("span", "tag", TAGS[sec.key] || sec.label.slice(0, 2)), document.createTextNode(sec.label));
+    const cards = el("div", "cards");
+    (sec.items || []).forEach((it, i) => {
+      const c = el("article", "card");
+      c.style.setProperty("--i", Math.min(i, 6));
+      c.append(el("h3", null, it.title), el("p", null, it.text));
+      if (it.why) {
+        const w = el("div", "why");
+        w.append(el("strong", null, "Pourquoi ça compte"), document.createTextNode(it.why));
+        c.append(w);
+      }
+      const foot = el("div", "card-foot");
+      if (it.sources?.length) {
+        const srcs = el("div", "srcs");
+        for (const src of it.sources) {
+          if (!/^https:\/\//.test(src.url || "")) continue;
+          const l = el("a", null, src.name || "Source");
+          l.href = src.url; l.target = "_blank"; l.rel = "noopener";
+          srcs.append(l);
+        }
+        foot.append(srcs);
+      }
+      const xb = el("button", "btn xbtn", "Explique-moi");
+      xb.type = "button";
+      xb.addEventListener("click", () => explain(it, c, xb));
+      foot.append(xb);
+      c.append(foot);
+      c.dataset.read = it.title + ". " + it.text;
+      cards.append(c);
+    });
+    s.append(h, cards);
+    frag.append(s);
+  });
+
+  root.replaceChildren(frag);
+  watchSections();
+  renderDays();
+}
+
+function renderDays() {
+  const others = briefs.length > 1;
+  $("archive").hidden = !others;
+  if (!others) return;
+  $("days").replaceChildren(...briefs.map((b) => {
+    const btn = el("button", b.date === current ? "on" : null, fmtShort(b.date));
+    btn.type = "button";
+    btn.addEventListener("click", () => { render(b); window.scrollTo({ top: 0, behavior: "smooth" }); });
+    return btn;
+  }));
+}
+
+// Écouter : lecture à voix haute avec la voix française de l'appareil, une carte après l'autre (les longs textes coupent sur iPhone).
+const canSpeak = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+let speaking = false, readToken = 0;
+function frVoice() {
+  const vs = speechSynthesis.getVoices().filter((v) => /^fr/i.test(v.lang));
+  return vs.find((v) => /fr-FR/i.test(v.lang) && /premium|enhanced|amélie|thomas/i.test(v.name)) || vs.find((v) => /fr-FR/i.test(v.lang)) || vs[0] || null;
+}
+function setListen(on) {
+  speaking = on;
+  const lb = $("listen");
+  if (lb) { lb.textContent = on ? "■ Stop" : "▶ Écouter"; lb.classList.toggle("on", on); }
+  if (!on) document.querySelectorAll(".reading").forEach((n) => n.classList.remove("reading"));
+}
+function stopReading() {
+  readToken++;
+  if (canSpeak) speechSynthesis.cancel();
+  setListen(false);
+}
+function readAll(b) {
+  stopReading();
+  const token = readToken;
+  const d = parseDate(b.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  const queue = [{ node: document.querySelector(".essentiel"), text: `Le Brief du ${d}. ${b.title ? b.title + ". " : ""}L'essentiel : ${(b.essentiel || []).join(" ")}` }];
+  document.querySelectorAll("section.theme").forEach((sec) => {
+    const label = sec.querySelector(".theme-title")?.lastChild?.textContent || "";
+    sec.querySelectorAll(".card").forEach((c, i) => queue.push({ node: c, text: (i === 0 ? label + ". " : "") + c.dataset.read }));
+  });
+  const voice = frVoice();
+  setListen(true);
+  const next = (k) => {
+    if (token !== readToken) return;
+    document.querySelectorAll(".reading").forEach((n) => n.classList.remove("reading"));
+    if (k >= queue.length) { setListen(false); return; }
+    const { node, text } = queue[k];
+    node?.classList.add("reading");
+    if (k > 0) node?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "fr-FR"; u.rate = 1.05;
+    if (voice) u.voice = voice;
+    u.onend = () => next(k + 1);
+    u.onerror = (e) => { if (e.error !== "interrupted" && e.error !== "canceled") next(k + 1); };
+    speechSynthesis.speak(u);
+  };
+  next(0); // premier speak() dans le clic : obligatoire sur iPhone
+}
+if (canSpeak) speechSynthesis.getVoices();
+
+// Explique-moi : l'IA réexplique une info simplement et dit ce que ça change pour Alou.
+let sample = null;
+const XERR = {
+  rate_limited: "Trop de demandes d'un coup. Réessaie dans un moment.",
+  session_expired: "Ta session a expiré : reconnecte-toi à Claude.",
+  refused: "L'IA n'a pas voulu répondre sur ce sujet.",
+};
+async function explain(it, card, btn) {
+  const open = card.querySelector(".explain");
+  if (open) { open._ctl?.abort(); open.remove(); btn.classList.remove("on"); btn.textContent = "Explique-moi"; return; }
+  if (!sample) return;
+  const box = el("div", "explain");
+  const bar = el("div", "progress"); bar.setAttribute("aria-hidden", "true");
+  const out = el("p", "explain-text wait", "L'IA réfléchit…");
+  out.setAttribute("aria-live", "polite");
+  box.append(bar, out);
+  card.querySelector(".card-foot").before(box);
+  btn.classList.add("on"); btn.textContent = "Fermer";
+  const ctl = new AbortController(); box._ctl = ctl;
+  const prompt = `Tu expliques l'actualité à Alou, 20 ans, étudiant en gestion d'entreprise à Vannes, qui lance des petits projets avec peu de budget. Tutoie-le, ton simple et direct, comme HugoDécrypte.
+
+Info : « ${it.title} »
+${it.text}
+
+Réponds en 3 parties courtes, exactement avec ces intitulés :
+En clair : 2 ou 3 phrases très simples, explique chaque mot technique.
+Pour toi : 1 ou 2 phrases sur ce que ça change concrètement pour lui ou ses projets. Si ça ne change rien, dis-le franchement.
+Le mot à retenir : un terme de l'info et sa définition en une phrase.
+90 mots maximum, sans markdown, sans rien inventer au-delà de l'info.`;
+  try {
+    await sample(prompt, {
+      signal: ctl.signal,
+      // quick : réponse immédiate et peu de tokens, suffisant pour vulgariser un paragraphe.
+      modelTier: "quick",
+      onText: ({ text }) => { out.classList.remove("wait"); out.textContent = text; },
+    });
+  } catch (e) {
+    if (e.code === "cancelled") return;
+    out.classList.remove("wait");
+    if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(e.code)) {
+      out.textContent = "L'IA n'est pas autorisée sur cette page.";
+      sample = null; document.body.classList.remove("has-ai");
+    } else out.textContent = e.text || XERR[e.code] || "Problème de connexion. Ferme et réessaie.";
+  } finally { box.classList.add("done"); }
+}
+(async () => { try { sample = await window.claude?.use("sample"); if (sample) document.body.classList.add("has-ai"); } catch { sample = null; } })();
+
+// Surligne le thème visible dans la barre de navigation.
+let io = null;
+function watchSections() {
+  io?.disconnect();
+  io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) {
+      document.querySelectorAll(".nav a").forEach((a) => a.classList.toggle("on", a.dataset.k === e.target.id));
+    }
+  }, { rootMargin: "-40% 0px -55% 0px" });
+  document.querySelectorAll("section.theme").forEach((s) => io.observe(s));
+}
+
+// Les briefs sont stockés dans la base « briefs » (un document par jour, id = date), réécrits par Claude toutes les 8 h (7h, 15h, 23h).
+(async () => {
+  try {
+    const db = await window.claude?.use("db");
+    if (!db) { showState("Brief indisponible ici", "Ouvre la page depuis ton compte Claude pour lire l'actu du jour."); return; }
+    db.collection("briefs").orderBy("date", "desc").limit(14).onSnapshot(
+      (snap) => {
+        briefs = snap.docs.map((d) => d.data()).filter((b) => b && b.date);
+        if (!briefs.length) { showState("Pas encore de brief", "Le premier brief apparaîtra ici dès qu'il sera écrit."); return; }
+        const keep = briefs.find((b) => b.date === current);
+        render(keep && current !== briefs[0].date && briefs.length ? keep : briefs[0]);
+      },
+      () => showState("Connexion perdue", "Recharge la page pour retrouver le brief."),
+    );
+  } catch {
+    showState("Brief indisponible ici", "Ouvre la page depuis ton compte Claude pour lire l'actu du jour.");
+  }
+})();
+</script>
+
+</body></html>
