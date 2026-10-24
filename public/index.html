@@ -95,6 +95,10 @@ h2 button{color:var(--tx2);font-size:13px;text-transform:none;letter-spacing:0;f
 .app .ic{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;font-size:24px;font-weight:700;color:#000}
 .app.add .ic{background:var(--s2);color:var(--tx2);border:1px dashed var(--s3)}
 .app span{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.app .ic{position:relative}
+.editing .app:not(.add) .ic::after{content:"✎";position:absolute;right:-6px;top:-6px;width:24px;height:24px;border-radius:50%;background:var(--tx);color:#000;display:grid;place-items:center;font-size:13px;font-weight:700}
+
 
 /* Chips */
 .chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 6px;padding:0 16px 2px;scrollbar-width:none}
@@ -392,12 +396,14 @@ function renderProjects(){
     : listCard([], "Aucun projet", "Crée ton premier projet avec le bouton en haut.")}`;
 }
 
+let editApps = false;
 function renderApps(){
   return `
-  <header class="top"><div><div class="eyebrow">Raccourcis</div><h1>Mes apps</h1></div></header>
-  <div class="card" style="padding:18px 12px"><div class="apps">${S.apps.map(appTile).join("")}
+  <header class="top"><div><div class="eyebrow">Raccourcis</div><h1>Mes apps</h1></div>
+    <button class="chip${editApps?" on":""}" data-act="toggleEditApps" style="min-height:44px;padding:0 18px">${editApps?"OK":"Modifier"}</button></header>
+  <div class="card" style="padding:18px 12px"><div class="apps${editApps?" editing":""}">${S.apps.map(appTile).join("")}
     <button class="app add" data-act="newApp"><div class="ic">+</div><span>Ajouter</span></button></div></div>
-  <p class="hint" style="margin-top:12px">Touche une app pour l'ouvrir. Appui long pour la modifier. Colle le lien web (ou le lien d'app) de Binvio, My Gym ou de n'importe quel outil.</p>`;
+  <p class="hint" style="margin-top:12px">Touche une app pour l'ouvrir. Pour changer un lien, un nom ou une couleur : appuie sur <b>Modifier</b>, puis sur l'app (ou appui long sur l'app).</p>`;
 }
 
 function render(){
@@ -596,7 +602,10 @@ document.addEventListener("click", e=>{
   }
   if(el.dataset.v) return go(el.dataset.v);
   if(el.dataset.filter){ filter=el.dataset.filter; return render(); }
-  if(el.dataset.app) return openApp(el.dataset.app);
+  if(el.dataset.app){
+    if(Date.now() < suppressClick) return;          // clic fantôme juste après un appui long
+    return editApps && view==="apps" ? appSheet(el.dataset.app) : openApp(el.dataset.app);
+  }
   const id = el.dataset.id || el.closest(".task")?.dataset.id;
   switch(el.dataset.act){
     case "toggle": return toggleTask(id);
@@ -620,6 +629,7 @@ document.addEventListener("click", e=>{
       openProject=null; save(); closeSheet(); render(); return toast("Projet supprimé");
     case "closeProject": openProject=null; return render();
     case "newApp": return appSheet();
+    case "toggleEditApps": editApps=!editApps; return render();
     case "saveApp": return saveApp(el.dataset.id||null);
     case "delApp": S.apps=S.apps.filter(a=>a.id!==id); save(); closeSheet(); return render();
     case "export": return download(new Blob([JSON.stringify(S,null,2)],{type:"application/json"}), `myself-${today()}.json`);
@@ -634,15 +644,13 @@ document.addEventListener("click", e=>{
 });
 
 // appui long sur une app = modifier
-let pressTimer;
+let pressTimer, suppressClick = 0;
 document.addEventListener("touchstart", e=>{
   const a=e.target.closest("[data-app]"); if(!a) return;
-  pressTimer=setTimeout(()=>{ pressTimer="fired"; appSheet(a.dataset.app); },500);
+  clearTimeout(pressTimer);
+  pressTimer=setTimeout(()=>{ suppressClick=Date.now()+900; if(navigator.vibrate) navigator.vibrate(15); appSheet(a.dataset.app); },450);
 },{passive:true});
-document.addEventListener("touchend", e=>{
-  if(pressTimer==="fired"){ e.preventDefault(); } clearTimeout(pressTimer); pressTimer=null;
-});
-document.addEventListener("touchmove", ()=>{ clearTimeout(pressTimer); },{passive:true});
+["touchend","touchcancel","touchmove"].forEach(t=>document.addEventListener(t, ()=>clearTimeout(pressTimer),{passive:true}));
 document.addEventListener("contextmenu", e=>{ const a=e.target.closest("[data-app]"); if(a){ e.preventDefault(); appSheet(a.dataset.app); }});
 
 $("#fab").onclick = ()=> taskSheet(null, {projectId: view==="projects" ? openProject : (view==="tasks" && filter!=="all" && filter!=="none" ? filter : null)});
