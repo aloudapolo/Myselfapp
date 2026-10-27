@@ -75,6 +75,39 @@ async function isAuthed(request, db) {
 
 const validCode = (c) => typeof c === "string" && c.length >= 8 && c.length <= 128;
 
+// Clé de secours : 20 caractères lisibles (100 bits), montrée une seule fois, stockée hachée.
+const KEY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const normKey = (k) => (typeof k === "string" ? k.toUpperCase().replace(/[^A-Z0-9]/g, "") : "");
+function newRecoveryKey() {
+  const chars = [...crypto.getRandomValues(new Uint8Array(20))].map((b) => KEY_ALPHABET[b & 31]).join("");
+  return chars.match(/.{4}/g).join("-");
+}
+
+// Pose un nouveau code + une nouvelle clé de secours, coupe toutes les sessions et en ouvre une neuve.
+async function setCode(db, code) {
+  const salt = randomHex(16);
+  const recovery = newRecoveryKey();
+  await db.batch([
+    db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('auth', ?)").bind(JSON.stringify({ salt, hash: await pbkdf2(code, salt) })),
+    db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('recovery', ?)").bind(await sha256(normKey(recovery))),
+    db.prepare("DELETE FROM meta WHERE k = 'fails'"),
+    db.prepare("DELETE FROM sessions"),
+  ]);
+  return { token: await newSession(db), recovery };
+}
+
+// 5 essais ratés (code ou clé de secours) = 1 minute de pause
+async function getFails(db) {
+  const row = await db.prepare("SELECT v FROM meta WHERE k = 'fails'").first();
+  return row ? JSON.parse(row.v) : { n: 0, until: 0 };
+}
+async function addFail(db, fails) {
+  fails.n += 1;
+  if (fails.n >= 5) { fails.n = 0; fails.until = Date.now() + 60000; }
+  await db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('fails', ?)").bind(JSON.stringify(fails)).run();
+}
+const locked = (fails) => json({ error: "locked", retryIn: Math.ceil((fails.until - Date.now()) / 1000) }, 429);
+
 async function handleAuth(request, db, route) {
   if (route === "status") {
     const row = await db.prepare("SELECT 1 AS x FROM meta WHERE k = 'auth'").first();
@@ -94,21 +127,35 @@ async function handleAuth(request, db, route) {
     const record = JSON.stringify({ salt, hash: await pbkdf2(body.code, salt) });
     const res = await db.prepare("INSERT OR IGNORE INTO meta (k, v) VALUES ('auth', ?)").bind(record).run();
     if (!res.meta.changes) return fail(409, "already_configured");
-    return json({ token: await newSession(db) });
+    const recovery = newRecoveryKey();
+    await db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('recovery', ?)").bind(await sha256(normKey(recovery))).run();
+    return json({ token: await newSession(db), recovery });
   }
 
-  // login : 5 essais ratés = 1 minute de pause
+  // changer de code depuis un appareil déjà connecté (la session suffit : c'est le cas « code oublié mais encore connecté »)
+  if (route === "change-code") {
+    if (!(await isAuthed(request, db))) return fail(401, "unauthorized");
+    return json(await setCode(db, body.code));
+  }
+
   const authRow = await db.prepare("SELECT v FROM meta WHERE k = 'auth'").first();
   if (!authRow) return fail(409, "not_configured");
-  const failsRow = await db.prepare("SELECT v FROM meta WHERE k = 'fails'").first();
-  const fails = failsRow ? JSON.parse(failsRow.v) : { n: 0, until: 0 };
-  const now = Date.now();
-  if (fails.until > now) return json({ error: "locked", retryIn: Math.ceil((fails.until - now) / 1000) }, 429);
+  const fails = await getFails(db);
+  if (fails.until > Date.now()) return locked(fails);
+
+  // code oublié : la clé de secours permet de choisir un nouveau code
+  if (route === "recover") {
+    const recRow = await db.prepare("SELECT v FROM meta WHERE k = 'recovery'").first();
+    if (!recRow || !sameString(await sha256(normKey(body.recovery)), recRow.v)) {
+      await addFail(db, fails);
+      return fail(401, "wrong_key");
+    }
+    return json(await setCode(db, body.code));
+  }
+
   const { salt, hash } = JSON.parse(authRow.v);
   if (!sameString(await pbkdf2(body.code, salt), hash)) {
-    fails.n += 1;
-    if (fails.n >= 5) { fails.n = 0; fails.until = now + 60000; }
-    await db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('fails', ?)").bind(JSON.stringify(fails)).run();
+    await addFail(db, fails);
     return fail(401, "wrong_code");
   }
   await db.prepare("DELETE FROM meta WHERE k = 'fails'").run();
@@ -200,7 +247,7 @@ export default {
     const route = url.pathname.slice(5).replace(/\/+$/, "");
     try {
       await init(env.DB);
-      if (["status", "setup", "login", "logout"].includes(route)) {
+      if (["status", "setup", "login", "logout", "change-code", "recover"].includes(route)) {
         if (route !== "status" && request.method !== "POST") return fail(405, "method_not_allowed");
         return await handleAuth(request, env.DB, route);
       }

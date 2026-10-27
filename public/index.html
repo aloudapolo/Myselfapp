@@ -104,6 +104,7 @@ h2 button{color:var(--tx2);font-size:13px;text-transform:none;letter-spacing:0;f
 .lockbox h1{font-size:34px;margin:0 0 6px}
 .lockbox p{color:var(--tx2);margin:0 0 18px;font-size:15px}
 .lockbox .inp{margin-bottom:10px;text-align:center}
+.lockbox .reckey{font:600 19px ui-monospace,Menlo,monospace;letter-spacing:1px;background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:16px 10px;margin:0 0 14px;user-select:all;-webkit-user-select:all;word-break:break-all}
 .lockbox .err{color:#ff8a84;min-height:22px;margin:4px 0 8px;font-size:14px}
 #appview{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column}
 #appview .avbar{display:flex;align-items:center;gap:6px;padding:calc(var(--sat) + 4px) 8px 4px;border-bottom:1px solid var(--line);flex:none}
@@ -331,6 +332,7 @@ async function showLock(){
     ${configured?"":'<input class="inp big" id="lockCode2" type="password" placeholder="Répète le code" autocomplete="new-password" enterkeyhint="done">'}
     <div class="err" id="lockErr"></div>
     <button class="btn" data-act="lockSubmit" data-mode="${configured?"login":"setup"}">${configured?"Entrer":"Créer mon code"}</button>
+    ${configured?'<button class="btn ghost" data-act="lockForgot" style="margin-top:10px">Code oublié ?</button>':""}
     <button class="btn ghost" data-act="lockSkip" style="margin-top:10px">Continuer sans synchro</button></div>`;
   box.querySelectorAll("input").forEach(i=>i.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); box.querySelector("[data-act=lockSubmit]").click(); }}));
 }
@@ -346,9 +348,60 @@ async function lockSubmit(mode){
     if(r.status===401){ err.textContent = "Code incorrect."; return; }
     if(r.status===409 && mode==="setup"){ showLock(); return; }
     if(!r.ok || !d.token){ err.textContent = "Erreur, réessaie."; return; }
-    setToken(d.token); $("#lock").classList.add("hidden"); $("#lock").innerHTML = "";
-    await pull(); render();
+    await signedIn(d);
   }catch(e){ err.textContent = "Pas de connexion."; }
+}
+// Après connexion : si le serveur a créé une clé de secours, on la montre (une seule fois)
+async function signedIn(d){
+  setToken(d.token); closeSheet();
+  if(d.recovery) return showRecoveryKey(d.recovery);
+  $("#lock").classList.add("hidden"); $("#lock").innerHTML = "";
+  await pull(); render();
+}
+function showRecoveryKey(key){
+  const box = $("#lock"); box.classList.remove("hidden");
+  box.innerHTML = `<div class="lockbox"><h1>Clé de secours</h1>
+    <p>Si tu oublies ton code, cette clé te permet d'en choisir un nouveau. Note-la dans un endroit sûr (Notes verrouillée, gestionnaire de mots de passe). Elle ne sera plus jamais affichée.</p>
+    <div class="reckey" id="recKey">${esc(key)}</div>
+    <button class="btn ghost" data-act="copyKey" style="margin-bottom:10px">Copier</button>
+    <button class="btn" data-act="keyNoted">Je l'ai notée</button></div>`;
+}
+function showForgot(){
+  const box = $("#lock"); box.classList.remove("hidden");
+  box.innerHTML = `<div class="lockbox"><h1>Code oublié</h1>
+    <p>Entre ta clé de secours, puis choisis un nouveau code. Tes données ne bougent pas.</p>
+    <input class="inp big" id="recIn" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false">
+    <input class="inp big" id="lockCode" type="password" placeholder="Nouveau code" autocomplete="new-password">
+    <input class="inp big" id="lockCode2" type="password" placeholder="Répète le code" autocomplete="new-password">
+    <div class="err" id="lockErr"></div>
+    <button class="btn" data-act="recoverSubmit">Changer mon code</button>
+    <button class="btn ghost" data-act="login" style="margin-top:10px">Retour</button>
+    <p class="hint" style="margin-top:14px">Pas de clé ? Encore connecté sur un autre appareil : Réglages, puis Changer mon code.</p></div>`;
+}
+async function newCodeSubmit(route){
+  const code = $("#lockCode").value, err = $("#lockErr");
+  if(code.length < 8){ err.textContent = "8 caractères minimum."; return; }
+  if(code !== $("#lockCode2").value){ err.textContent = "Les deux codes ne sont pas identiques."; return; }
+  const body = {code}, headers = {"content-type":"application/json"};
+  if(route==="recover") body.recovery = $("#recIn").value; else headers.authorization = "Bearer "+getToken();
+  err.textContent = "…";
+  try{
+    const r = await fetch("/api/"+route, {method:"POST", headers, body:JSON.stringify(body)});
+    const d = await r.json().catch(()=>({}));
+    if(r.status===429){ err.textContent = "Trop d'essais. Réessaie dans "+(d.retryIn||60)+" s."; return; }
+    if(r.status===401){ err.textContent = route==="recover" ? "Clé de secours incorrecte." : "Session expirée, reconnecte-toi."; return; }
+    if(!r.ok || !d.token){ err.textContent = "Erreur, réessaie."; return; }
+    await signedIn(d);
+  }catch(e){ err.textContent = "Pas de connexion."; }
+}
+function changeCodeSheet(){
+  openSheet(`
+    <h3>Changer mon code <button data-act="close">Fermer</button></h3>
+    <p class="hint" style="margin-top:0">Tes autres appareils seront déconnectés. Tu recevras une nouvelle clé de secours.</p>
+    <div class="field"><label>Nouveau code</label><input class="inp" id="lockCode" type="password" autocomplete="new-password"></div>
+    <div class="field"><label>Répète le code</label><input class="inp" id="lockCode2" type="password" autocomplete="new-password"></div>
+    <div class="err" id="lockErr" style="color:#ff8a84;min-height:22px;font-size:14px"></div>
+    <button class="btn" data-act="changeCodeSubmit">Changer mon code</button>`);
 }
 
 /* ============ Dates ============ */
@@ -788,6 +841,7 @@ function settingsSheet(){
     <button class="btn" data-act="saveSettings">Enregistrer</button>
     <h2 style="margin-top:28px">Synchro</h2>
     <p class="hint" style="margin-top:0">${getToken() ? (syncState==="offline" ? "Hors ligne : tes changements partiront dès que la connexion revient." : "Tes tâches se synchronisent entre tes appareils.") : "Désactivée : tes données restent sur cet appareil."}</p>
+    ${getToken()?'<button class="btn ghost" data-act="changeCode" style="margin-bottom:10px">Changer mon code</button>':""}
     <button class="btn ghost" data-act="${getToken()?"logout":"login"}">${getToken()?"Se déconnecter":"Se connecter"}</button>
     <h2 style="margin-top:28px">Sauvegarde</h2>
     <div class="btns"><button class="btn ghost" data-act="export">Exporter</button><button class="btn ghost" data-act="import">Importer</button></div>
@@ -845,6 +899,12 @@ document.addEventListener("click", e=>{
     case "newApp": return appSheet();
     case "toggleEditApps": editApps=!editApps; return render();
     case "lockSubmit": return lockSubmit(el.dataset.mode);
+    case "lockForgot": return showForgot();
+    case "recoverSubmit": return newCodeSubmit("recover");
+    case "changeCode": return changeCodeSheet();
+    case "changeCodeSubmit": return newCodeSubmit("change-code");
+    case "copyKey": navigator.clipboard?.writeText($("#recKey").textContent).then(()=>toast("Clé copiée", false),()=>{}); return;
+    case "keyNoted": $("#lock").classList.add("hidden"); $("#lock").innerHTML=""; pull().then(render); return;
     case "lockSkip": $("#lock").classList.add("hidden"); $("#lock").innerHTML=""; return;
     case "login": closeSheet(); return showLock();
     case "logout": (async()=>{ try{ await fetch("/api/logout",{method:"POST",headers:{authorization:"Bearer "+getToken()}}); }catch(e){} setToken(null); syncState="local"; closeSheet(); showLock(); })(); return;
