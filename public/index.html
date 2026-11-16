@@ -221,7 +221,7 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7
 function defaults(){
   const p1 = uid(), p2 = uid(), p3 = uid();
   return {
-    v:5, name:"Alou",
+    v:6, name:"Alou",
     projects:[
       {id:p1, name:"Mon entreprise", cat:"ent", color:COLORS[0]},
       {id:p2, name:"Sport", cat:"sport", color:COLORS[1]},
@@ -236,7 +236,7 @@ function defaults(){
       {id:uid(), name:"Binvio", url:"https://binvio.binvio.workers.dev/", kind:"binvio", icon:"/icons/binvio.svg", color:"#5b8cff"},
       {id:uid(), name:"My Gym", url:"/apps/mygym.html", kind:"embed", icon:"/icons/mygym.svg", color:"#3ddc97"},
       {id:uid(), name:"G Calendar", url:"https://calendar.google.com/calendar/r", icon:"/icons/calendar.svg", color:"#ff5f57"},
-      {id:uid(), name:"Le brief", url:"/apps/brief.html", kind:"embed", icon:"/icons/lebrief.svg", color:"#ffb547"}
+      {id:uid(), name:"MyBrief", url:"/apps/brief.html", kind:"embed", icon:"/icons/mybrief.svg", color:"#ffb547"}
     ],
     log:[] // {taskId, date} : historique des tâches cochées
   };
@@ -275,6 +275,12 @@ function migrate(){
       if(a.name==="Le brief" && (!a.url || a.url.includes("claude.ai/artifact"))){ a.url="/apps/brief.html"; a.kind="embed"; }
     });
     S.v = 5;
+  }
+  if(S.v < 6){ // v6 : "Le brief" devient MyBrief (nouveau nom, nouvelle icône)
+    S.apps.forEach(a=>{
+      if(a.name==="Le brief" || a.url==="/apps/brief.html"){ a.name="MyBrief"; if(!a.icon || a.icon==="/icons/lebrief.svg") a.icon="/icons/mybrief.svg"; }
+    });
+    S.v = 6;
   }
 }
 function saveLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -327,7 +333,7 @@ async function showLock(){
     return;
   }
   box.innerHTML = `<div class="lockbox"><h1>Myself</h1>
-    <p>${configured ? "Entre ton code pour synchroniser et ouvrir tes apps." : "Choisis ton code (8 caractères minimum). Il protège tes données en ligne : MyGym, le brief, Binvio."}</p>
+    <p>${configured ? "Entre ton code pour synchroniser et ouvrir tes apps." : "Choisis ton code (8 caractères minimum). Il protège tes données en ligne : MyGym, MyBrief, Binvio."}</p>
     <input class="inp big" id="lockCode" type="password" placeholder="Ton code" autocomplete="${configured?"current-password":"new-password"}" enterkeyhint="done">
     ${configured?"":'<input class="inp big" id="lockCode2" type="password" placeholder="Répète le code" autocomplete="new-password" enterkeyhint="done">'}
     <div class="err" id="lockErr"></div>
