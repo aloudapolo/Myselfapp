@@ -179,6 +179,41 @@ input[type=date].inp,input[type=time].inp{display:block;min-width:0}
 .toast button{min-height:40px;padding:0 14px;border-radius:10px;background:#000;color:#fff;font-weight:600;font-size:14px}
 .back{display:inline-flex;align-items:center;gap:4px;color:var(--tx2);min-height:44px;font-size:16px;margin-left:-4px}
 .sub{color:var(--tx2);font-size:15px;margin-top:4px}
+
+/* Assistant IA */
+.aibtn{position:fixed;right:max(22px,calc(50vw - 258px));bottom:calc(var(--nav) + var(--sab) + 90px);z-index:21;width:48px;height:48px;border-radius:50%;
+  background:var(--s2);color:var(--tx);display:grid;place-items:center;border:1px solid var(--s3);box-shadow:0 6px 18px rgba(0,0,0,.6)}
+.aibtn svg{width:22px;height:22px}
+.aibtn:active{transform:scale(.94)}
+#ai{position:fixed;left:0;right:0;bottom:0;z-index:45;max-width:560px;margin:0 auto;height:88dvh;display:flex;flex-direction:column;
+  background:var(--s1);border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;
+  transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+#ai.on{transform:none}
+#ai .aihead{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 18px;border-bottom:1px solid var(--line);flex:none}
+#ai .aihead b{flex:1;font-size:18px}
+#ai .aihead button{min-height:44px;padding:0 10px;color:var(--tx2);font-size:15px}
+#aiLog{flex:1;overflow-y:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
+.bub{max-width:86%;padding:10px 14px;border-radius:18px;font-size:16px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
+.bub.u{align-self:flex-end;background:var(--tx);color:#000;border-bottom-right-radius:6px}
+.bub.a{align-self:flex-start;background:var(--s2);border-bottom-left-radius:6px}
+.bub.err{background:rgba(255,95,87,.12);color:#ff8a84}
+.bub.typing{color:var(--tx3)}
+.prop{align-self:stretch;background:var(--s2);border:1px solid var(--s3);border-radius:14px;padding:12px 14px}
+.prop .t{font-weight:600;font-size:16px}
+.prop .btns{margin-top:10px}
+.prop .btn{min-height:44px;font-size:15px;margin:0}
+.prop .btn.ghost{background:var(--s3)}
+.prop .btn.danger{color:var(--tx3)}
+.prop .st{margin-top:8px;font-size:14px;color:var(--ok)}
+.prop .st.no{color:var(--tx3)}
+.aisugg{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.aibar{display:flex;align-items:flex-end;gap:8px;padding:10px 12px calc(var(--sab) + 10px);border-top:1px solid var(--line);flex:none}
+.aibar textarea{flex:1;min-height:46px;max-height:140px;padding:11px 14px;border-radius:22px;background:var(--s2);border:1px solid var(--line);outline:none;resize:none;line-height:1.35}
+.aibar button{width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--s2);color:var(--tx)}
+.aibar button svg{width:22px;height:22px}
+.aibar button.send{background:var(--tx);color:#000}
+.aibar button.rec{background:var(--bad);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px rgba(255,95,87,.25)}}
 </style>
 </head>
 <body>
@@ -187,6 +222,19 @@ input[type=date].inp,input[type=time].inp{display:block;min-width:0}
 <button class="fab" id="fab" aria-label="Nouvelle tâche">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
 </button>
+
+<button class="aibtn" id="aiBtn" aria-label="Assistant">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+</button>
+<div id="ai" role="dialog" aria-modal="true" aria-label="Assistant">
+  <div class="aihead"><b>Assistant</b><button data-act="aiClear">Effacer</button><button data-act="aiClose">Fermer</button></div>
+  <div id="aiLog"></div>
+  <div class="aibar">
+    <button id="aiMic" aria-label="Dicter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <textarea id="aiIn" rows="1" placeholder="Parle ou écris…" enterkeyhint="send"></textarea>
+    <button class="send" id="aiSend" aria-label="Envoyer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+  </div>
+</div>
 
 <nav class="tabs" id="tabs">
   <button data-v="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
@@ -636,7 +684,7 @@ function openSheet(html){
   $("#scrim").classList.add("on"); sh.classList.add("on");
 }
 function closeSheet(){ $("#scrim").classList.remove("on"); $("#sheet").classList.remove("on"); document.activeElement?.blur(); }
-$("#scrim").onclick = closeSheet;
+$("#scrim").onclick = ()=>{ closeSheet(); closeAi(); };
 
 function chipSet(name, options, value){
   return `<div class="wrap" data-group="${name}">${options.map(([v,l])=>`<button type="button" class="chip${v===value?" on":""}" data-val="${esc(v)}">${l}</button>`).join("")}</div>`;
@@ -644,7 +692,7 @@ function chipSet(name, options, value){
 function groupVal(name){ return $(`#sheet [data-group="${name}"] .chip.on`)?.dataset.val ?? ""; }
 
 function taskSheet(id, preset={}){
-  const t = id ? S.tasks.find(x=>x.id===id) : {title:"",date:today(),time:"",projectId:preset.projectId||null,priority:0,repeat:"none",notes:""};
+  const t = id ? S.tasks.find(x=>x.id===id) : {title:preset.title||"",date:preset.date!==undefined?preset.date:today(),time:preset.time||"",projectId:preset.projectId||null,priority:preset.priority||0,repeat:preset.repeat||"none",notes:preset.notes||""};
   if(!t) return;
   const td=today(), tm=addDays(td,1), we=weekendDate();
   const dateQuick = [[td,"Aujourd'hui"],[tm,"Demain"],[we,"Ce week-end"],["","Sans date"]].filter((d,i,a)=>a.findIndex(x=>x[0]===d[0])===i);
@@ -883,6 +931,13 @@ document.addEventListener("click", e=>{
   const id = el.dataset.id || el.closest(".task")?.dataset.id;
   switch(el.dataset.act){
     case "toggle": return toggleTask(id);
+    case "aiClose": return closeAi();
+    case "aiClear": stopRec(); aiMsgs=[]; aiSave(); return aiRender();
+    case "aiSugg": return aiSend(el.dataset.q);
+    case "aiAdd": return aiAdd(el);
+    case "aiSkip": { const p=aiProp(el); if(p){ p.state="skipped"; aiSave(); aiRender(); } return; }
+    case "aiEdit": { const p=aiProp(el); if(!p) return; p.state="edited"; aiSave(); closeAi();
+      return taskSheet(null, {title:p.title, date:p.date||"", time:p.time||"", projectId:proj(p.projectId)?p.projectId:null, priority:p.priority||0, repeat:p.repeat||"none", notes:p.notes||""}); }
     case "edit": return taskSheet(id);
     case "close": return closeSheet();
     case "saveTask": return saveTask(el.dataset.id||null);
@@ -971,6 +1026,147 @@ document.addEventListener("visibilitychange", ()=>{
   if(!$("#sheet").classList.contains("on") && $("#appview").classList.contains("hidden")){ render(); pull(); }
   refreshBinvio();
 });
+
+/* ============ Assistant IA (Claude Haiku via le Worker) ============ */
+const AI_KEY = "myself.ai";
+let aiMsgs = [], aiBusy = false, rec = null, recOn = false;
+try{ aiMsgs = JSON.parse(localStorage.getItem(AI_KEY)) || []; }catch(e){ aiMsgs = []; }
+const aiSave = ()=>{ try{ localStorage.setItem(AI_KEY, JSON.stringify(aiMsgs.slice(-40))); }catch(e){} };
+const AI_SUGG = ["Qu'est-ce que j'ai à faire aujourd'hui ?","Ajoute : appeler le comptable demain à 10h","Combien j'ai encaissé ce mois sur Binvio ?","Résume-moi le brief du jour"];
+const fmtNow = new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});
+
+function propHtml(p, mi, pi){
+  const pr = proj(p.projectId);
+  const meta = [];
+  meta.push(`<span>${p.date ? relDate(p.date)+(p.time?" · "+p.time:"") : (p.time||"Sans date")}</span>`);
+  if(p.repeat && p.repeat!=="none") meta.push(`<span>↻ ${REPEAT[p.repeat]||""}</span>`);
+  if(pr) meta.push(`<span><i class="dot" style="background:${pr.color}"></i>${esc(pr.name)}</span>`);
+  if(p.priority) meta.push(`<span>${p.priority===2?"Urgente":"Importante"}</span>`);
+  const actions = p.state==="added" ? `<div class="st">Ajoutée ✓</div>`
+    : p.state==="skipped" ? `<div class="st no">Ignorée</div>`
+    : p.state==="edited" ? `<div class="st no">Ouverte pour modification</div>`
+    : `<div class="btns"><button class="btn" data-act="aiAdd" data-m="${mi}" data-p="${pi}">Ajouter</button><button class="btn ghost" data-act="aiEdit" data-m="${mi}" data-p="${pi}">Modifier</button></div>
+       <button class="btn danger" data-act="aiSkip" data-m="${mi}" data-p="${pi}" style="min-height:40px;font-size:14px;margin-top:4px">Ignorer</button>`;
+  return `<div class="prop"><div class="t">${esc(p.title)}</div><div class="meta">${meta.join("")}</div>${p.notes?`<div class="meta"><span>${esc(p.notes)}</span></div>`:""}${actions}</div>`;
+}
+function aiRender(){
+  const log = $("#aiLog");
+  let h = "";
+  if(!aiMsgs.length) h = `<div class="bub a">Salut ${esc(S.name)} 👋 Dicte-moi une tâche ou pose-moi une question sur tes tâches, MyGym, MyBrief ou Binvio. Je te demande toujours de valider avant d'ajouter quoi que ce soit.</div>
+    <div class="aisugg">${AI_SUGG.map(q=>`<button class="chip" data-act="aiSugg" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>`;
+  aiMsgs.forEach((m,mi)=>{
+    if(m.content) h += `<div class="bub ${m.role==="user"?"u":"a"}${m.err?" err":""}">${esc(m.content)}</div>`;
+    (m.proposals||[]).forEach((p,pi)=> h += propHtml(p,mi,pi));
+  });
+  if(aiBusy) h += `<div class="bub a typing">…</div>`;
+  log.innerHTML = h;
+  log.scrollTop = log.scrollHeight;
+}
+function openAi(){
+  if(!getToken()){ showLock(); return; }
+  closeSheet();
+  $("#scrim").classList.add("on"); $("#ai").classList.add("on");
+  aiRender(); aiFit();
+}
+function closeAi(){ stopRec(); $("#ai").classList.remove("on"); if(!$("#sheet").classList.contains("on")) $("#scrim").classList.remove("on"); $("#aiIn").blur(); }
+// Garde la barre de saisie au-dessus du clavier iOS
+function aiFit(){
+  const vv = window.visualViewport, el = $("#ai"); if(!vv || !el) return;
+  const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+  el.style.bottom = kb+"px";
+  el.style.height = Math.min(vv.height*0.88 + (kb?vv.height*0.1:0), vv.height - 8)+"px";
+  const log = $("#aiLog"); if(log) log.scrollTop = log.scrollHeight;
+}
+if(window.visualViewport){ visualViewport.addEventListener("resize", aiFit); visualViewport.addEventListener("scroll", aiFit); }
+
+const AI_ERR = {
+  ai_not_configured: "L'assistant n'est pas encore branché : il manque la clé API Anthropic dans les réglages Cloudflare.",
+  ai_bad_key: "La clé API Anthropic est refusée. Vérifie-la (ou ton crédit) dans la console Anthropic.",
+  ai_daily_limit: "Limite du jour atteinte. Ça repart demain.",
+  ai_busy: "L'IA est saturée, réessaie dans quelques secondes."
+};
+async function aiSend(text){
+  text = (text||"").trim();
+  if(!text || aiBusy) return;
+  if(!getToken()){ showLock(); return; }
+  stopRec();
+  aiMsgs.push({role:"user", content:text});
+  $("#aiIn").value = ""; aiGrow();
+  aiBusy = true; aiRender();
+  const history = aiMsgs.filter(m=>!m.err).map(m=>{
+    let c = m.content || "";
+    if(m.proposals && m.proposals.length) c += "\n[Tâches proposées : " + m.proposals.map(p=>p.title+" ("+(p.state==="added"?"ajoutée":p.state==="skipped"?"refusée":p.state==="edited"?"ouverte pour modification":"en attente")+")").join(", ") + "]";
+    return {role:m.role, content:c.trim()};
+  }).filter(m=>m.content);
+  const context = {
+    now: fmtNow.format(new Date()) + " (" + today() + ")",
+    projects: S.projects.map(p=>({id:p.id, name:p.name, cat:CATS[p.cat]?.label||p.cat})),
+    tasks: S.tasks.map(t=>({title:t.title, date:t.date, time:t.time, projectId:t.projectId, priority:t.priority, repeat:t.repeat, notes:t.notes, done:t.done, doneAt:t.doneAt}))
+  };
+  try{
+    const r = await fetch("/api/ai", {method:"POST", headers:{"content-type":"application/json", authorization:"Bearer "+getToken()}, body:JSON.stringify({messages:history, context})});
+    if(r.status===401){ setToken(null); aiBusy=false; closeAi(); showLock(); return; }
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok) aiMsgs.push({role:"assistant", err:true, content: AI_ERR[d.error] || "Oups, l'assistant n'a pas pu répondre. Réessaie."});
+    else aiMsgs.push({role:"assistant", content:d.reply||"", proposals:(d.proposals||[]).map(p=>({...p, state:"pending"}))});
+  }catch(e){
+    aiMsgs.push({role:"assistant", err:true, content:"Pas de connexion. Réessaie quand tu as du réseau."});
+  }
+  aiBusy = false; aiSave(); aiRender();
+}
+function aiProp(el){ const m = aiMsgs[+el.dataset.m]; return m && m.proposals ? m.proposals[+el.dataset.p] : null; }
+function aiAdd(el){
+  const p = aiProp(el); if(!p || p.state!=="pending") return;
+  snapshot();
+  const t = {id:uid(), done:false, createdAt:Date.now(), title:p.title, date:p.date||null, time:p.time||null,
+    projectId: proj(p.projectId) ? p.projectId : null, priority:p.priority||0, repeat:p.repeat||"none", notes:p.notes||""};
+  if(t.repeat!=="none" && !t.date) t.date = today();
+  S.tasks.push(t); save(); render();
+  p.state = "added"; aiSave(); aiRender();
+  if(navigator.vibrate) navigator.vibrate(10);
+  toast("Tâche ajoutée");
+}
+function aiGrow(){ const i=$("#aiIn"); i.style.height="auto"; i.style.height=Math.min(i.scrollHeight,140)+"px"; }
+
+// Dictée : reconnaissance vocale de Safari (fr-FR), sinon le micro du clavier iOS
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+function stopRec(){ if(rec && recOn){ try{ rec.stop(); }catch(e){} } }
+function micFallback(msg){
+  const i=$("#aiIn"); i.focus();
+  toast(msg || "Touche le micro 🎤 du clavier pour dicter", false);
+}
+function toggleRec(){
+  if(recOn){ stopRec(); return; }
+  if(!SR) return micFallback();
+  let finalText = "", base = $("#aiIn").value.trim();
+  try{
+    rec = new SR(); rec.lang = "fr-FR"; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+  }catch(e){ return micFallback(); }
+  rec.onresult = e=>{
+    let interim = "";
+    for(let k=e.resultIndex; k<e.results.length; k++){
+      const r = e.results[k];
+      if(r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript;
+    }
+    $("#aiIn").value = (base ? base+" " : "") + (finalText + interim).trim(); aiGrow();
+  };
+  rec.onerror = e=>{
+    recOn = false; $("#aiMic").classList.remove("rec");
+    if(e.error==="not-allowed" || e.error==="service-not-allowed") micFallback("Micro refusé. Autorise-le dans Réglages > Safari, ou utilise le micro du clavier.");
+    else if(e.error!=="no-speech" && e.error!=="aborted") micFallback();
+  };
+  rec.onend = ()=>{
+    const was = recOn; recOn = false; $("#aiMic").classList.remove("rec");
+    if(was && finalText.trim()) aiSend($("#aiIn").value);   // phrase dictée : on envoie direct
+  };
+  try{ rec.start(); recOn = true; $("#aiMic").classList.add("rec"); if(navigator.vibrate) navigator.vibrate(10); }
+  catch(e){ recOn = false; micFallback(); }
+}
+$("#aiBtn").onclick = openAi;
+$("#aiMic").onclick = toggleRec;
+$("#aiSend").onclick = ()=> aiSend($("#aiIn").value);
+$("#aiIn").addEventListener("input", aiGrow);
+$("#aiIn").addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); aiSend($("#aiIn").value); }});
 
 load(); saveLocal(); render();
 (async()=>{ if(getToken()){ await pull(); refreshBinvio(); } else showLock(); })();
