@@ -1,357 +1,272 @@
-<!doctype html><html><head><script src="/shim.js"></script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Le Brief</title>
-<link rel="icon" href="/icons/lebrief.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<!doctype html><html lang="fr"><head><script src="/shim.js"></script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#000;color:#f4f4f5}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>MyBrief</title>
+<meta name="theme-color" content="#000000">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="/icons/mybrief.svg" type="image/svg+xml">
 <style>
-/* Layout : une colonne façon fil d'actu mobile. En-tête + bandeau défilant des titres, cadre noir « L'essentiel », puis une section par thème avec des cartes info. Thème clair unique (charte Outils IA). */
-:root {
-  --cream: #F4ECDD;
-  --paper: #FBF7EF;
-  --beige: #E4D5BB;
-  --ink: #121110;
-  --muted: #645B4C;
-  --shadow: 5px 5px 0 var(--ink);
-  --shadow-up: 8px 8px 0 var(--ink);
-  --ease: cubic-bezier(.2, .9, .25, 1.2);
-  --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
-  --font-body: "Instrument Sans", "Helvetica Neue", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
-  color-scheme: light;
+/* Interface calquée sur l'appli Myself : fond noir, cartes sombres à bordure fine, titres en capitales grises,
+   puces de filtre, barre d'onglets floutée en bas, bouton rond blanc, feuilles qui montent du bas. */
+:root{
+  --bg:#000; --s1:#0e0e0f; --s2:#17171a; --s3:#222226; --line:#26262b;
+  --tx:#f4f4f5; --tx2:#a1a1aa; --tx3:#6b6b73;
+  --acc:#fff; --ok:#3ddc97; --bad:#ff5f57;
+  --r:16px; --r-sm:12px;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --nav:64px;
+  color-scheme:dark;
 }
-* { box-sizing: border-box; }
-html, body { background: var(--cream); }
-body { color: var(--ink); font: 16px/1.55 var(--font-body); }
-.wrap { max-width: 720px; margin: 0 auto; padding-inline: 18px; padding-block: 30px 72px; }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);
+  font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+body{min-height:100dvh;overscroll-behavior-y:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;touch-action:manipulation}
+a{color:inherit}
+.hidden{display:none!important}
 
-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
-h1 { font: 800 clamp(2.8rem, 12vw, 4.4rem)/0.9 var(--font-display); letter-spacing: -0.035em; margin: 0; animation: drop .7s var(--ease) backwards; }
-h1 em { font-style: normal; display: inline-block; background: var(--ink); color: var(--cream); padding: 0 .18em .06em; border-radius: 10px; transform: rotate(-2deg); margin-top: 6px; }
-/* Logo : même famille que Prompt Assist (tuile + ombre dure), coin corné façon page de journal. */
-.logo { width: clamp(72px, 20vw, 104px); height: auto; flex: none; animation: drop .7s var(--ease) backwards, float 4s ease-in-out .8s infinite; }
-/* Ligne de date façon « une » de journal : jour en tampon noir, date complète, compteur d'infos. */
-.dateline { display: flex; align-items: center; gap: 14px; padding-block: 12px; margin-bottom: 22px; border-block: 2px solid var(--ink); animation: drop .7s var(--ease) .1s backwards; }
-.stamp { display: grid; place-items: center; width: 58px; height: 58px; flex: none; border-radius: 12px; background: var(--ink); color: var(--cream); font: 800 2rem/1 var(--font-display); letter-spacing: -0.04em; transform: rotate(-4deg); box-shadow: 3px 3px 0 var(--beige); font-variant-numeric: tabular-nums; }
-.dl-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.dl-day { font: 800 1.35rem/1.05 var(--font-display); letter-spacing: -0.01em; text-transform: capitalize; }
-.dl-month { font: 500 12px/1.3 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-.dl-count { margin-left: auto; text-align: right; font: 500 11px/1.4 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.dl-count b { display: block; font: 800 1.35rem/1 var(--font-display); letter-spacing: -0.02em; color: var(--ink); }
-.ticker { background: var(--ink); color: var(--cream); border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; margin-bottom: 26px; box-shadow: var(--shadow); }
-.ticker-track { display: flex; width: max-content; animation: scroll 50s linear infinite; will-change: transform; }
-.ticker span { font: 600 13px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: 11px 0; white-space: nowrap; }
-.ticker i { font-style: normal; display: inline-block; background: var(--cream); color: var(--ink); border-radius: 5px; padding: 3px 6px; margin-right: 8px; }
-.ticker b { color: var(--beige); font-weight: 500; padding-inline: 16px; }
+main{padding-block:calc(var(--sat) + 12px) calc(var(--nav) + var(--sab) + 96px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  max-width:560px;margin:0 auto}
+.view{animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
-/* L'essentiel */
-.essentiel { background: var(--paper); border: 2px solid var(--ink); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-up); animation: drop .7s var(--ease) .2s backwards; }
-.ess-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--ink); color: var(--cream); padding: 14px 18px; }
-.ess-head h2 { font: 800 1.3rem/1.1 var(--font-display); margin: 0; }
-.ess-head span { font: 500 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--beige); }
-.headline { font: 800 clamp(1.45rem, 5.4vw, 1.9rem)/1.1 var(--font-display); letter-spacing: -0.02em; margin: 0; padding: 16px 18px 4px; text-wrap: balance; }
-.ess-list { list-style: none; margin: 0; padding: 8px 18px 18px; display: grid; gap: 10px; }
-.ess-list li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; }
-.ess-list li::before { content: counter(ess); counter-increment: ess; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--beige); border: 2px solid var(--ink); font: 800 15px/1 var(--font-display); }
-.ess-list { counter-reset: ess; }
+header.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:8px 0 20px}
+.eyebrow{color:var(--tx3);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+h1{font-size:30px;line-height:1.15;margin:4px 0 0;font-weight:700;letter-spacing:-.02em}
+h2{font-size:13px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin:28px 4px 10px;
+  display:flex;justify-content:space-between;align-items:center;gap:8px}
+h2 .lbl{display:flex;align-items:center;gap:8px}
+h2 span.n{color:var(--tx3);font-weight:500}
+.chip:active,.fab:active{transform:scale(.94)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
 
-/* Navigation par thème */
-.nav { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 10px); z-index: 5; display: flex; gap: 2px; margin: 26px 0 8px; padding: 8px; background: var(--cream); border: 2px solid var(--ink); border-radius: 999px; box-shadow: var(--shadow); overflow-x: auto; scrollbar-width: none; }
-.nav::-webkit-scrollbar { display: none; }
-.nav a { flex: 1 0 auto; text-align: center; font: 600 13.5px/1 var(--font-body); color: var(--ink); text-decoration: none; padding: 10px 9px; border-radius: 999px; border: 2px solid transparent; transition: background .2s, color .2s; }
-.nav a sup { font: 500 10px/1 var(--font-mono); margin-left: 2px; color: var(--muted); }
-.nav a.on { background: var(--ink); color: var(--cream); }
-.nav a.on sup { color: var(--beige); }
-@media (max-width: 460px) { .nav { padding: 6px; } .nav a { padding: 10px 6px; font-size: 13px; } .nav a sup { display: none; } }
+.card{background:var(--s1);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 
-section.theme { scroll-margin-top: 90px; padding-top: 26px; }
-.theme-title { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; font: 800 1.9rem/1 var(--font-display); letter-spacing: -0.02em; }
-.theme-title .tag { display: grid; place-items: center; min-width: 46px; height: 46px; padding-inline: 8px; border-radius: 12px; background: var(--ink); color: var(--cream); font-size: 1.1rem; transform: rotate(-3deg); }
-.theme-title::after { content: ""; flex: 1; border-top: 2px dashed var(--beige); }
-.cards { display: grid; gap: 16px; }
+/* Carte du haut : l'essentiel, façon carte « hero » de Myself */
+.hero{padding:18px}
+.hero .head{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.ring{width:56px;height:56px;flex:none;position:relative}
+.ring svg{width:56px;height:56px;transform:rotate(-90deg)}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:17px;font-weight:700}
+.hero strong{display:block;font-size:20px;line-height:1.2;letter-spacing:-.01em}
+.hero .upd{color:var(--tx3);font-size:13px;margin-top:3px}
+.ess{list-style:none;margin:0;padding:0;counter-reset:e;border-top:1px solid var(--line)}
+.ess li{display:flex;gap:12px;padding-top:12px;margin-top:12px;font-size:15px;color:var(--tx2)}
+.ess li:first-child{margin-top:0}
+.ess li::before{counter-increment:e;content:counter(e);flex:none;width:24px;height:24px;border-radius:50%;
+  background:var(--s3);color:var(--tx);display:grid;place-items:center;font-size:13px;font-weight:700;margin-top:-1px}
+.hero.reading{border-color:#4a4a52}
 
-.card { background: var(--paper); border: 2px solid var(--ink); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0; transition: transform .2s var(--ease), box-shadow .2s var(--ease); animation: drop .6s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 70ms + 150ms); }
-.card:hover { transform: translate(-3px, -3px); box-shadow: var(--shadow-up); }
-.card h3 { font: 800 1.25rem/1.15 var(--font-display); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
-.card p { margin: 0; }
-.why { background: var(--beige); border-radius: 10px; padding: 10px 12px; font-size: .95rem; }
-.why strong { display: block; font: 600 11px/1.4 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 2px; }
-.srcs { display: flex; flex-wrap: wrap; gap: 6px; }
-.srcs a { font: 500 12px/1 var(--font-mono); color: var(--ink); text-decoration: none; border: 1.5px solid var(--ink); border-radius: 999px; padding: 6px 10px; transition: background .15s, transform .12s; }
-.srcs a::after { content: " ↗"; }
-.srcs a:hover { background: var(--ink); color: var(--cream); }
-.srcs a:active { transform: translate(2px, 2px); }
-.card-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+/* Puces de filtre par thème, collées en haut au défilement */
+.chips{display:flex;gap:8px;overflow-x:auto;margin:12px -16px 0;padding:calc(var(--sat) + 8px) 16px 10px;scrollbar-width:none;
+  position:sticky;top:0;z-index:10;background:linear-gradient(var(--bg) 75%,transparent)}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:36px;padding:0 14px;border-radius:999px;background:var(--s2);color:var(--tx2);font-size:14px;font-weight:500;
+  display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;transition:background .15s,color .15s}
+.chip.on{background:var(--tx);color:#000}
+.chip .c{font-size:12px;opacity:.6}
 
-/* Boutons Écouter / Explique-moi : même gestuelle que Prompt Assist (s'enfoncent au clic). */
-.btn { font: 600 14px/1 var(--font-body); border-radius: 999px; padding: 10px 15px; cursor: pointer; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); box-shadow: 3px 3px 0 var(--ink); transition: transform .12s ease, box-shadow .12s ease, background .2s; }
-.btn:hover { background: var(--beige); }
-.btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
-.btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
-.btn.on { background: var(--ink); color: var(--cream); }
-.ess-head .btn { background: var(--cream); border-color: var(--cream); box-shadow: 3px 3px 0 var(--beige); padding: 9px 14px; }
-.ess-head .btn.on { background: var(--beige); border-color: var(--beige); }
-.xbtn { margin-left: auto; }
-body:not(.has-ai) .xbtn { display: none; }
+/* Infos : une ligne par info dans une carte, comme les tâches de Myself */
+.item{display:flex;gap:12px;padding:14px 12px 14px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left;min-height:64px;align-items:flex-start;transition:background .15s}
+.item:last-child{border-bottom:0}
+.item:active{background:var(--s2)}
+.item .bar{width:3px;align-self:stretch;border-radius:3px;flex:none}
+.item .body{flex:1;min-width:0}
+.item .t{font-size:16px;font-weight:600;line-height:1.3}
+.item .x{font-size:14px;color:var(--tx2);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px;font-size:13px;color:var(--tx3)}
+.chev{color:var(--tx3);font-size:20px;line-height:1.2;flex:none}
+.item.reading{background:var(--s2)}
+.item.reading .t::before{content:"▶ ";color:var(--ok)}
 
-.explain { border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; animation: drop .45s var(--ease) backwards; }
-.explain .progress { height: 6px; background: repeating-linear-gradient(-45deg, var(--ink) 0 8px, var(--beige) 8px 16px); background-size: 200% 100%; animation: stripes .8s linear infinite; }
-.explain.done .progress { display: none; }
-.explain-text { margin: 0; padding: 12px 14px; font: 14px/1.6 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--cream); }
-.explain-text.wait { color: var(--muted); }
-
-.card.reading { transform: translate(-3px, -3px); box-shadow: var(--shadow-up); background: var(--cream); }
-.card.reading h3::before { content: "▶ "; }
-.essentiel.reading .ess-list { background: var(--cream); }
+.empty{padding:28px 18px;text-align:center;color:var(--tx3);font-size:15px}
+.empty b{display:block;color:var(--tx2);font-size:16px;margin-bottom:4px}
+.loader{height:4px;border-radius:4px;background:var(--s3);overflow:hidden;margin:14px auto 0;max-width:160px}
+.loader i{display:block;height:100%;width:40%;background:var(--tx2);border-radius:4px;animation:load 1s ease-in-out infinite}
+@keyframes load{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
 
 /* Archives */
-.archive { margin-top: 44px; }
-.archive h2 { font: 800 1.5rem/1 var(--font-display); letter-spacing: -0.02em; margin: 0 0 14px; }
-.days { display: flex; flex-wrap: wrap; gap: 10px; }
-.days button { font: 600 14px/1 var(--font-body); border-radius: 999px; padding: 11px 16px; cursor: pointer; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); box-shadow: 4px 4px 0 var(--ink); transition: transform .12s ease, box-shadow .12s ease, background .2s; }
-.days button:hover { background: var(--beige); }
-.days button:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
-.days button.on { background: var(--ink); color: var(--cream); }
-.days button:focus-visible, .nav a:focus-visible, .srcs a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.prow{display:flex;align-items:center;gap:14px;padding:14px 16px;min-height:68px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.prow:last-child{border-bottom:0}
+.prow .sq{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-weight:700;flex:none;background:var(--s2)}
+.prow.on .sq{background:var(--tx);color:#000}
+.prow .info{flex:1;min-width:0}
+.prow .n{font-weight:600}
+.prow .n::first-letter{text-transform:uppercase}
+.prow .s{font-size:13px;color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-.state { background: var(--paper); border: 2px dashed var(--ink); border-radius: 14px; padding: 22px 18px; margin-top: 10px; }
-.state h2 { font: 800 1.3rem/1.1 var(--font-display); margin: 0 0 6px; }
-.state p { margin: 0; color: var(--muted); }
-.loader { height: 6px; margin-top: 14px; border-radius: 3px; background: repeating-linear-gradient(-45deg, var(--ink) 0 8px, var(--beige) 8px 16px); background-size: 200% 100%; animation: stripes .8s linear infinite; }
+/* Barre d'onglets */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-around;
+  padding:6px 8px calc(var(--sab) + 6px);background:rgba(0,0,0,.82);
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid var(--line)}
+nav.tabs button{flex:1;max-width:110px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--tx3);font-size:11px;font-weight:500}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button.on{color:var(--tx)}
+.fab{position:fixed;right:max(16px,calc(50vw - 264px));bottom:calc(var(--nav) + var(--sab) + 16px);z-index:21;width:60px;height:60px;border-radius:50%;
+  background:var(--acc);color:#000;display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.1);transition:transform .12s,background .2s}
+.fab svg{width:26px;height:26px}
+.fab.on{background:var(--ok)}
 
-@keyframes drop { from { transform: translateY(-14px); box-shadow: 0 0 0 var(--ink); } }
-@keyframes float { 50% { transform: translateY(-6px) rotate(3deg); } }
-@keyframes scroll { to { transform: translateX(-50%); } }
-@keyframes stripes { to { background-position: -45px 0; } }
-/* « Réduire les animations » : on garde les animations (demandé), seul le bandeau ralentit. */
-@media (prefers-reduced-motion: reduce) { .ticker-track { animation-duration: 100s; } }
+/* Feuille du bas : détail d'une info */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-width:560px;margin:0 auto;max-height:92dvh;overflow-y:auto;
+  background:var(--s1);border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;
+  padding:8px 16px calc(var(--sab) + 20px);transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);overscroll-behavior:contain}
+.sheet.on{transform:none}
+.grab{width:40px;height:5px;border-radius:5px;background:var(--s3);margin:4px auto 10px}
+.sheet .bar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.sheet .bar-top .eyebrow{display:flex;align-items:center;gap:8px}
+.sheet .bar-top button{color:var(--tx2);font-size:16px;font-weight:500;min-height:44px;padding:0 4px}
+.sheet h3{margin:0 0 12px;font-size:22px;line-height:1.2;letter-spacing:-.01em}
+.sheet p.txt{margin:0;font-size:16px;line-height:1.55}
+.why{margin-top:16px;padding:14px;border-radius:var(--r-sm);background:var(--s2)}
+.why b{display:block;font-size:12px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.why span{font-size:15px;color:var(--tx2)}
+.srcs{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.srcs a{min-height:36px;padding:0 14px;border-radius:999px;background:var(--s2);color:var(--tx2);font-size:14px;font-weight:500;
+  display:inline-flex;align-items:center;text-decoration:none}
+.srcs a::after{content:"↗";margin-left:6px;color:var(--tx3)}
+.btn{width:100%;min-height:52px;border-radius:14px;background:var(--acc);color:#000;font-weight:600;font-size:17px;margin-top:18px}
+.btn.ghost{background:var(--s2);color:var(--tx)}
+.btn:active{transform:scale(.98)}
+body:not(.has-ai) .ai-only{display:none}
+.explain{margin-top:12px;padding:14px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--bg);font-size:15px;line-height:1.55;white-space:pre-wrap}
+.explain.wait{color:var(--tx3)}
+.explain .loader{margin:10px 0 0;max-width:none}
 </style>
 
-<div class="wrap">
-  <header>
-    <h1>Le<br><em>Brief</em></h1>
-    <svg class="logo" viewBox="0 0 256 256" width="96" height="96" role="img" aria-label="Logo Le Brief"><rect x="44" y="44" width="200" height="200" rx="34" fill="#121110"/><path d="M58 24 H190 L230 64 V196 A34 34 0 0 1 196 230 H58 A34 34 0 0 1 24 196 V58 A34 34 0 0 1 58 24 Z" fill="#FBF7EF" stroke="#121110" stroke-width="8" stroke-linejoin="round"/><path d="M190 24 V50 A14 14 0 0 0 204 64 H230" fill="#E4D5BB" stroke="#121110" stroke-width="8" stroke-linejoin="round"/><text x="124" y="176" text-anchor="middle" font-family="Bricolage Grotesque, Arial Black, Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="118" letter-spacing="-6" fill="#121110">LB</text><rect x="56" y="196" width="138" height="9" rx="4.5" fill="#121110"/></svg>
-  </header>
+<main id="app"></main>
 
-  <div class="dateline" id="dateline" hidden>
-    <div class="stamp" id="stamp"></div>
-    <div class="dl-text">
-      <span class="dl-day" id="dl-day"></span>
-      <span class="dl-month" id="dl-month"></span>
-    </div>
-    <div class="dl-count"><b id="dl-n"></b>infos</div>
-  </div>
+<button class="fab hidden" id="fab" aria-label="Écouter le brief"></button>
 
-  <div class="ticker" aria-hidden="true" id="ticker" hidden>
-    <div class="ticker-track" id="ticker-track"></div>
-  </div>
+<nav class="tabs" id="tabs">
+  <button data-v="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg>Aujourd'hui</button>
+  <button data-v="archive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Archives</button>
+</nav>
 
-  <div id="brief"></div>
-
-  <div class="state" id="state">
-    <h2>Le brief arrive</h2>
-    <p>Chargement de l'actu du jour : IA, Finance, Business, France et Bretagne.</p>
-    <div class="loader" aria-hidden="true"></div>
-  </div>
-
-  <section class="archive" id="archive" hidden>
-    <h2>Les jours d'avant</h2>
-    <div class="days" id="days"></div>
-  </section>
-</div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
 
 <script>
-const $ = (id) => document.getElementById(id);
-const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
-const TAGS = { ia: "IA", finance: "€", business: "B", france: "FR", bretagne: "BZH" };
-let briefs = [], current = null;
+"use strict";
+const THEMES = {
+  ia:       {label:"IA",       color:"#b57bff"},
+  finance:  {label:"Finance",  color:"#3ddc97"},
+  business: {label:"Business", color:"#5b8cff"},
+  france:   {label:"France",   color:"#ffb547"},
+  bretagne: {label:"Bretagne", color:"#ff7aa8"}
+};
+const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
+const ICON_STOP = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>';
 
-function parseDate(iso) { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); }
-const fmtShort = (iso) => parseDate(iso).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const parseDate = iso => { const [y,m,d] = iso.split("-").map(Number); return new Date(y,m-1,d); };
+const fmtLong = new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+const theme = sec => THEMES[sec.key] || {label:sec.label||sec.key, color:"#e4e4e7"};
+const count = b => (b.sections||[]).reduce((n,s)=>n+(s.items||[]).length,0);
 
-function showState(title, text, loading = false) {
-  const s = $("state");
-  s.hidden = false;
-  s.replaceChildren(el("h2", null, title), el("p", null, text));
-  if (loading) { const l = el("div", "loader"); l.setAttribute("aria-hidden", "true"); s.append(l); }
-}
+let briefs = [], current = null, view = "today", filter = "all";
+const brief = () => briefs.find(b=>b.date===current) || briefs[0];
 
-function render(b) {
-  stopReading();
-  current = b.date;
-  $("state").hidden = true;
-  const d = parseDate(b.date);
-  $("stamp").textContent = String(d.getDate()).padStart(2, "0");
-  $("dl-day").textContent = d.toLocaleDateString("fr-FR", { weekday: "long" });
-  let sub = d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+function updTime(b){
   const up = b.updatedAt ? new Date(b.updatedAt) : null;
-  if (up && !isNaN(up)) sub += " · màj " + up.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).replace(":", "h");
-  $("dl-month").textContent = sub;
-  $("dl-n").textContent = (b.sections || []).reduce((n, sec) => n + (sec.items || []).length, 0);
-  $("dateline").hidden = false;
-
-  // Bandeau : les titres du jour, dupliqués pour une boucle sans couture.
-  const line = () => {
-    const s = el("span");
-    for (const sec of b.sections || []) for (const it of sec.items || []) {
-      s.append(el("i", null, sec.label), document.createTextNode(it.title), el("b", null, "✦"));
-    }
-    return s;
-  };
-  $("ticker-track").replaceChildren(line(), line());
-  $("ticker").hidden = false;
-
-  const root = $("brief");
-  const frag = document.createDocumentFragment();
-
-  const ess = el("section", "essentiel");
-  const head = el("div", "ess-head");
-  head.append(el("h2", null, "L'essentiel"));
-  if (canSpeak) {
-    const lb = el("button", "btn listen", "▶ Écouter");
-    lb.type = "button"; lb.id = "listen";
-    lb.addEventListener("click", () => (speaking ? stopReading() : readAll(b)));
-    head.append(lb);
-  } else head.append(el("span", null, "30 secondes"));
-  const ul = el("ol", "ess-list");
-  for (const t of b.essentiel || []) ul.append(el("li", null, t));
-  ess.append(head);
-  if (b.title) ess.append(el("p", "headline", b.title));
-  ess.append(ul);
-  frag.append(ess);
-
-  const nav = el("nav", "nav");
-  nav.setAttribute("aria-label", "Thèmes");
-  frag.append(nav);
-
-  (b.sections || []).forEach((sec) => {
-    const a = el("a", null, sec.label);
-    a.href = "#" + sec.key;
-    a.dataset.k = sec.key;
-    a.append(el("sup", null, String((sec.items || []).length)));
-    a.addEventListener("click", (ev) => { ev.preventDefault(); $(sec.key)?.scrollIntoView({ behavior: "smooth" }); });
-    nav.append(a);
-
-    const s = el("section", "theme");
-    s.id = sec.key;
-    const h = el("h2", "theme-title");
-    h.append(el("span", "tag", TAGS[sec.key] || sec.label.slice(0, 2)), document.createTextNode(sec.label));
-    const cards = el("div", "cards");
-    (sec.items || []).forEach((it, i) => {
-      const c = el("article", "card");
-      c.style.setProperty("--i", Math.min(i, 6));
-      c.append(el("h3", null, it.title), el("p", null, it.text));
-      if (it.why) {
-        const w = el("div", "why");
-        w.append(el("strong", null, "Pourquoi ça compte"), document.createTextNode(it.why));
-        c.append(w);
-      }
-      const foot = el("div", "card-foot");
-      if (it.sources?.length) {
-        const srcs = el("div", "srcs");
-        for (const src of it.sources) {
-          if (!/^https:\/\//.test(src.url || "")) continue;
-          const l = el("a", null, src.name || "Source");
-          l.href = src.url; l.target = "_blank"; l.rel = "noopener";
-          srcs.append(l);
-        }
-        foot.append(srcs);
-      }
-      const xb = el("button", "btn xbtn", "Explique-moi");
-      xb.type = "button";
-      xb.addEventListener("click", () => explain(it, c, xb));
-      foot.append(xb);
-      c.append(foot);
-      c.dataset.read = it.title + ". " + it.text;
-      cards.append(c);
-    });
-    s.append(h, cards);
-    frag.append(s);
-  });
-
-  root.replaceChildren(frag);
-  watchSections();
-  renderDays();
+  return up && !isNaN(up) ? up.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",timeZone:"Europe/Paris"}).replace(":","h") : "";
+}
+function ring(n){
+  const r=23, c=2*Math.PI*r;
+  return `<div class="ring"><svg viewBox="0 0 56 56"><circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--s3)" stroke-width="6"/>
+    <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--ok)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="0"/></svg><b>${n}</b></div>`;
+}
+function itemRow(it, sec, idx){
+  const t = theme(sec), n = (it.sources||[]).length;
+  return `<button class="item" data-sec="${esc(sec.key)}" data-i="${idx}">
+    <i class="bar" style="background:${t.color}"></i>
+    <div class="body"><div class="t">${esc(it.title)}</div><div class="x">${esc(it.text)}</div>
+      <div class="meta"><span>${esc(t.label)}</span>${n?`<span>${n} source${n>1?"s":""}</span>`:""}</div></div>
+    <span class="chev">›</span></button>`;
 }
 
-function renderDays() {
-  const others = briefs.length > 1;
-  $("archive").hidden = !others;
-  if (!others) return;
-  $("days").replaceChildren(...briefs.map((b) => {
-    const btn = el("button", b.date === current ? "on" : null, fmtShort(b.date));
-    btn.type = "button";
-    btn.addEventListener("click", () => { render(b); window.scrollTo({ top: 0, behavior: "smooth" }); });
-    return btn;
-  }));
+function renderToday(){
+  const b = brief();
+  const up = updTime(b);
+  const secs = (b.sections||[]).filter(s=>(s.items||[]).length);
+  const shown = filter==="all" ? secs : secs.filter(s=>s.key===filter);
+  return `
+  <header class="top"><div><div class="eyebrow">${fmtLong.format(parseDate(b.date))}</div><h1>${b.date===briefs[0].date?"MyBrief":"Archive"}</h1></div></header>
+  <div class="card hero" id="hero">
+    <div class="head">${ring(count(b))}<div><strong>${esc(b.title||"L'essentiel")}</strong><div class="upd">${count(b)} infos${up?` · màj ${up}`:""}</div></div></div>
+    <ol class="ess">${(b.essentiel||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ol>
+  </div>
+  <div class="chips">
+    <button class="chip${filter==="all"?" on":""}" data-filter="all">Tout <span class="c">${count(b)}</span></button>
+    ${secs.map(s=>`<button class="chip${filter===s.key?" on":""}" data-filter="${esc(s.key)}"><i class="dot" style="background:${theme(s).color}"></i>${esc(theme(s).label)} <span class="c">${s.items.length}</span></button>`).join("")}
+  </div>
+  ${shown.map(s=>`<h2><span class="lbl"><i class="dot" style="background:${theme(s).color}"></i>${esc(theme(s).label)}</span><span class="n">${s.items.length}</span></h2>
+    <div class="card">${s.items.map((it,i)=>itemRow(it,s,i)).join("")}</div>`).join("")}`;
 }
 
-// Écouter : lecture à voix haute avec la voix française de l'appareil, une carte après l'autre (les longs textes coupent sur iPhone).
-const canSpeak = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
-let speaking = false, readToken = 0;
-function frVoice() {
-  const vs = speechSynthesis.getVoices().filter((v) => /^fr/i.test(v.lang));
-  return vs.find((v) => /fr-FR/i.test(v.lang) && /premium|enhanced|amélie|thomas/i.test(v.name)) || vs.find((v) => /fr-FR/i.test(v.lang)) || vs[0] || null;
+function renderArchive(){
+  return `
+  <header class="top"><div><div class="eyebrow">${briefs.length} jour${briefs.length>1?"s":""}</div><h1>Archives</h1></div></header>
+  <div class="card">${briefs.map(b=>{const d=parseDate(b.date);return `<button class="prow${b.date===current?" on":""}" data-day="${b.date}">
+    <div class="sq">${String(d.getDate()).padStart(2,"0")}</div>
+    <div class="info"><div class="n">${fmtLong.format(d)}</div><div class="s">${esc(b.title||"")} · ${count(b)} infos</div></div>
+    <span class="chev">›</span></button>`}).join("")}</div>`;
 }
-function setListen(on) {
-  speaking = on;
-  const lb = $("listen");
-  if (lb) { lb.textContent = on ? "■ Stop" : "▶ Écouter"; lb.classList.toggle("on", on); }
-  if (!on) document.querySelectorAll(".reading").forEach((n) => n.classList.remove("reading"));
-}
-function stopReading() {
-  readToken++;
-  if (canSpeak) speechSynthesis.cancel();
-  setListen(false);
-}
-function readAll(b) {
-  stopReading();
-  const token = readToken;
-  const d = parseDate(b.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-  const queue = [{ node: document.querySelector(".essentiel"), text: `Le Brief du ${d}. ${b.title ? b.title + ". " : ""}L'essentiel : ${(b.essentiel || []).join(" ")}` }];
-  document.querySelectorAll("section.theme").forEach((sec) => {
-    const label = sec.querySelector(".theme-title")?.lastChild?.textContent || "";
-    sec.querySelectorAll(".card").forEach((c, i) => queue.push({ node: c, text: (i === 0 ? label + ". " : "") + c.dataset.read }));
-  });
-  const voice = frVoice();
-  setListen(true);
-  const next = (k) => {
-    if (token !== readToken) return;
-    document.querySelectorAll(".reading").forEach((n) => n.classList.remove("reading"));
-    if (k >= queue.length) { setListen(false); return; }
-    const { node, text } = queue[k];
-    node?.classList.add("reading");
-    if (k > 0) node?.scrollIntoView({ behavior: "smooth", block: "center" });
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "fr-FR"; u.rate = 1.05;
-    if (voice) u.voice = voice;
-    u.onend = () => next(k + 1);
-    u.onerror = (e) => { if (e.error !== "interrupted" && e.error !== "canceled") next(k + 1); };
-    speechSynthesis.speak(u);
-  };
-  next(0); // premier speak() dans le clic : obligatoire sur iPhone
-}
-if (canSpeak) speechSynthesis.getVoices();
 
-// Explique-moi : l'IA réexplique une info simplement et dit ce que ça change pour Alou.
+function render(){
+  if(!briefs.length) return;
+  $("#app").innerHTML = `<div class="view">${view==="today" ? renderToday() : renderArchive()}</div>`;
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on", b.dataset.v===view));
+  $("#fab").classList.toggle("hidden", !canSpeak || view!=="today");
+  syncFab();
+}
+function showEmpty(title, text, loading){
+  $("#app").innerHTML = `<div class="view"><header class="top"><div><div class="eyebrow">Actu du jour</div><h1>MyBrief</h1></div></header>
+    <div class="card"><div class="empty"><b>${esc(title)}</b>${esc(text)}${loading?'<div class="loader"><i></i></div>':""}</div></div></div>`;
+}
+function go(v){ stopReading(); view=v; render(); window.scrollTo(0,0); }
+
+/* ---------- Feuille de détail + Explique-moi ---------- */
+let explainCtl = null;
+function openSheet(html){
+  const sh=$("#sheet"); sh.innerHTML = `<div class="grab"></div>`+html; sh.scrollTop=0;
+  $("#scrim").classList.add("on"); sh.classList.add("on");
+}
+function closeSheet(){ explainCtl?.abort(); explainCtl=null; $("#scrim").classList.remove("on"); $("#sheet").classList.remove("on"); }
+$("#scrim").onclick = closeSheet;
+
+function itemSheet(secKey, i){
+  const sec = (brief().sections||[]).find(s=>s.key===secKey); const it = sec?.items?.[i]; if(!it) return;
+  const t = theme(sec);
+  const srcs = (it.sources||[]).filter(s=>/^https:\/\//.test(s.url||""));
+  openSheet(`
+    <div class="bar-top"><span class="eyebrow"><i class="dot" style="background:${t.color}"></i>${esc(t.label)}</span><button data-act="close">Fermer</button></div>
+    <h3>${esc(it.title)}</h3>
+    <p class="txt">${esc(it.text)}</p>
+    ${it.why?`<div class="why"><b>Pourquoi ça compte</b><span>${esc(it.why)}</span></div>`:""}
+    ${srcs.length?`<div class="srcs">${srcs.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name||"Source")}</a>`).join("")}</div>`:""}
+    <button class="btn ai-only" data-act="explain" data-sec="${esc(secKey)}" data-i="${i}">Explique-moi</button>
+    <div id="explainBox"></div>`);
+}
+
 let sample = null;
 const XERR = {
-  rate_limited: "Trop de demandes d'un coup. Réessaie dans un moment.",
-  session_expired: "Ta session a expiré : reconnecte-toi à Claude.",
-  refused: "L'IA n'a pas voulu répondre sur ce sujet.",
+  rate_limited:"Trop de demandes d'un coup. Réessaie dans un moment.",
+  session_expired:"Ta session a expiré : reconnecte-toi à Claude.",
+  refused:"L'IA n'a pas voulu répondre sur ce sujet."
 };
-async function explain(it, card, btn) {
-  const open = card.querySelector(".explain");
-  if (open) { open._ctl?.abort(); open.remove(); btn.classList.remove("on"); btn.textContent = "Explique-moi"; return; }
-  if (!sample) return;
-  const box = el("div", "explain");
-  const bar = el("div", "progress"); bar.setAttribute("aria-hidden", "true");
-  const out = el("p", "explain-text wait", "L'IA réfléchit…");
-  out.setAttribute("aria-live", "polite");
-  box.append(bar, out);
-  card.querySelector(".card-foot").before(box);
-  btn.classList.add("on"); btn.textContent = "Fermer";
-  const ctl = new AbortController(); box._ctl = ctl;
+async function explain(btn){
+  const sec = (brief().sections||[]).find(s=>s.key===btn.dataset.sec); const it = sec?.items?.[+btn.dataset.i];
+  if(!it || !sample) return;
+  if(btn.classList.contains("ghost")){ explainCtl?.abort(); explainCtl=null; $("#explainBox").innerHTML=""; btn.textContent="Explique-moi"; btn.classList.remove("ghost"); return; }
+  btn.textContent="Masquer l'explication"; btn.classList.add("ghost");
+  const box = document.createElement("div"); box.className="explain wait"; box.innerHTML='L\'IA réfléchit…<div class="loader"><i></i></div>';
+  box.setAttribute("aria-live","polite");
+  $("#explainBox").replaceChildren(box);
+  const ctl = new AbortController(); explainCtl = ctl;
   const prompt = `Tu expliques l'actualité à Alou, 20 ans, étudiant en gestion d'entreprise à Vannes, qui lance des petits projets avec peu de budget. Tutoie-le, ton simple et direct, comme HugoDécrypte.
 
 Info : « ${it.title} »
@@ -362,53 +277,89 @@ En clair : 2 ou 3 phrases très simples, explique chaque mot technique.
 Pour toi : 1 ou 2 phrases sur ce que ça change concrètement pour lui ou ses projets. Si ça ne change rien, dis-le franchement.
 Le mot à retenir : un terme de l'info et sa définition en une phrase.
 90 mots maximum, sans markdown, sans rien inventer au-delà de l'info.`;
-  try {
-    await sample(prompt, {
-      signal: ctl.signal,
-      // quick : réponse immédiate et peu de tokens, suffisant pour vulgariser un paragraphe.
-      modelTier: "quick",
-      onText: ({ text }) => { out.classList.remove("wait"); out.textContent = text; },
-    });
-  } catch (e) {
-    if (e.code === "cancelled") return;
-    out.classList.remove("wait");
-    if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(e.code)) {
-      out.textContent = "L'IA n'est pas autorisée sur cette page.";
-      sample = null; document.body.classList.remove("has-ai");
-    } else out.textContent = e.text || XERR[e.code] || "Problème de connexion. Ferme et réessaie.";
-  } finally { box.classList.add("done"); }
+  try{
+    // quick : réponse immédiate et peu de tokens, suffisant pour vulgariser un paragraphe.
+    await sample(prompt,{signal:ctl.signal, modelTier:"quick", onText:({text})=>{ box.classList.remove("wait"); box.textContent=text; }});
+  }catch(e){
+    if(e.code==="cancelled") return;
+    box.classList.remove("wait");
+    if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e.code)){
+      box.textContent="L'IA n'est pas autorisée sur cette page."; sample=null; document.body.classList.remove("has-ai");
+    } else box.textContent = e.text || XERR[e.code] || "Problème de connexion. Réessaie.";
+  }finally{ if(explainCtl===ctl) explainCtl=null; }
 }
-(async () => { try { sample = await window.claude?.use("sample"); if (sample) document.body.classList.add("has-ai"); } catch { sample = null; } })();
+(async()=>{ try{ sample = await window.claude?.use("sample"); if(sample) document.body.classList.add("has-ai"); }catch{ sample=null; } })();
 
-// Surligne le thème visible dans la barre de navigation.
-let io = null;
-function watchSections() {
-  io?.disconnect();
-  io = new IntersectionObserver((entries) => {
-    for (const e of entries) if (e.isIntersecting) {
-      document.querySelectorAll(".nav a").forEach((a) => a.classList.toggle("on", a.dataset.k === e.target.id));
-    }
-  }, { rootMargin: "-40% 0px -55% 0px" });
-  document.querySelectorAll("section.theme").forEach((s) => io.observe(s));
+/* ---------- Écouter : voix française de l'appareil, une info après l'autre ---------- */
+const canSpeak = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+let speaking = false, readToken = 0;
+function frVoice(){
+  const vs = speechSynthesis.getVoices().filter(v=>/^fr/i.test(v.lang));
+  return vs.find(v=>/fr-FR/i.test(v.lang) && /premium|enhanced|amélie|thomas/i.test(v.name)) || vs.find(v=>/fr-FR/i.test(v.lang)) || vs[0] || null;
 }
+function syncFab(){
+  const f=$("#fab"); f.innerHTML = speaking ? ICON_STOP : ICON_PLAY; f.classList.toggle("on", speaking);
+  f.setAttribute("aria-label", speaking ? "Arrêter la lecture" : "Écouter le brief");
+}
+function clearReading(){ document.querySelectorAll(".reading").forEach(n=>n.classList.remove("reading")); }
+function stopReading(){ readToken++; if(canSpeak) speechSynthesis.cancel(); speaking=false; clearReading(); syncFab(); }
+function readAll(){
+  stopReading();
+  const b = brief(), token = readToken;
+  const queue = [{node:$("#hero"), text:`MyBrief du ${fmtLong.format(parseDate(b.date))}. ${b.title?b.title+". ":""}L'essentiel : ${(b.essentiel||[]).join(" ")}`}];
+  let last = null;
+  document.querySelectorAll(".item").forEach(row=>{
+    const sec = (b.sections||[]).find(s=>s.key===row.dataset.sec); const it = sec?.items?.[+row.dataset.i]; if(!it) return;
+    queue.push({node:row, text:(sec.key!==last ? theme(sec).label+". " : "")+it.title+". "+it.text}); last = sec.key;
+  });
+  const voice = frVoice();
+  speaking = true; syncFab();
+  const next = k=>{
+    if(token!==readToken) return;
+    clearReading();
+    if(k>=queue.length){ speaking=false; syncFab(); return; }
+    const {node,text} = queue[k];
+    node?.classList.add("reading");
+    if(k>0) node?.scrollIntoView({behavior:"smooth",block:"center"});
+    const u = new SpeechSynthesisUtterance(text); u.lang="fr-FR"; u.rate=1.05; if(voice) u.voice=voice;
+    u.onend = ()=>next(k+1);
+    u.onerror = e=>{ if(e.error!=="interrupted" && e.error!=="canceled") next(k+1); };
+    speechSynthesis.speak(u);
+  };
+  next(0); // premier speak() dans le clic : obligatoire sur iPhone
+}
+if(canSpeak) speechSynthesis.getVoices();
+$("#fab").onclick = ()=> speaking ? stopReading() : readAll();
 
-// Les briefs sont stockés dans la base « briefs » (un document par jour, id = date), réécrits par Claude toutes les 8 h (7h, 15h, 23h).
-(async () => {
-  try {
+/* ---------- Événements ---------- */
+document.addEventListener("click", e=>{
+  const el = e.target.closest("[data-v],[data-filter],[data-day],[data-act],.item");
+  if(!el) return;
+  if(el.dataset.v) return go(el.dataset.v);
+  if(el.dataset.filter){ stopReading(); filter=el.dataset.filter; render(); return; }
+  if(el.dataset.day){ current=el.dataset.day; filter="all"; return go("today"); }
+  if(el.dataset.act==="close") return closeSheet();
+  if(el.dataset.act==="explain") return explain(el);
+  if(el.classList.contains("item")) return itemSheet(el.dataset.sec, +el.dataset.i);
+});
+
+/* ---------- Données : un document par jour dans « briefs » (id = date) de la base D1 myself, via /shim.js. Réécrit par la routine MyBrief toutes les 8 h ---------- */
+showEmpty("MyBrief arrive","Chargement de l'actu du jour : IA, Finance, Business, France et Bretagne.",true);
+(async()=>{
+  try{
     const db = await window.claude?.use("db");
-    if (!db) { showState("Brief indisponible ici", "Ouvre la page depuis ton compte Claude pour lire l'actu du jour."); return; }
-    db.collection("briefs").orderBy("date", "desc").limit(14).onSnapshot(
-      (snap) => {
-        briefs = snap.docs.map((d) => d.data()).filter((b) => b && b.date);
-        if (!briefs.length) { showState("Pas encore de brief", "Le premier brief apparaîtra ici dès qu'il sera écrit."); return; }
-        const keep = briefs.find((b) => b.date === current);
-        render(keep && current !== briefs[0].date && briefs.length ? keep : briefs[0]);
+    if(!db){ showEmpty("Brief indisponible ici","Ouvre MyBrief depuis le dashboard Myself pour lire l'actu du jour."); return; }
+    db.collection("briefs").orderBy("date","desc").limit(14).onSnapshot(
+      snap=>{
+        const wasLatest = !current || current===briefs[0]?.date;
+        briefs = snap.docs.map(d=>d.data()).filter(b=>b && b.date);
+        if(!briefs.length){ showEmpty("Pas encore de brief","Le premier brief apparaîtra ici dès qu'il sera écrit."); return; }
+        if(wasLatest || !briefs.some(b=>b.date===current)) current = briefs[0].date;
+        if(!speaking) render();
       },
-      () => showState("Connexion perdue", "Recharge la page pour retrouver le brief."),
+      ()=>showEmpty("Connexion perdue","Recharge la page pour retrouver le brief.")
     );
-  } catch {
-    showState("Brief indisponible ici", "Ouvre la page depuis ton compte Claude pour lire l'actu du jour.");
-  }
+  }catch{ showEmpty("Brief indisponible ici","Ouvre MyBrief depuis le dashboard Myself pour lire l'actu du jour."); }
 })();
 </script>
 

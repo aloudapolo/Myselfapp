@@ -1,5 +1,5 @@
 // Remplace l'environnement claude.ai (window.claude.use("db" | "user")) par l'API du dashboard.
-// MyGym et Le Brief ont été écrits pour claude.ai : ce fichier leur donne la même base de données,
+// MyGym et MyBrief ont été écrits pour claude.ai : ce fichier leur donne la même base de données,
 // stockée ici sur Cloudflare D1. L'IA ("sample") n'existe pas en dehors de claude.ai : elle reste indisponible.
 (function () {
   var TOKEN_KEY = "myself.token";
