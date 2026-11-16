@@ -1,6 +1,8 @@
 // API du dashboard : un petit magasin de documents (D1) protégé par un code.
 // Les pages de public/ sont servies par le binding ASSETS ; seul /api/* passe ici.
 
+import { handleAi } from "./ai.js";
+
 const PBKDF2_ITERATIONS = 60000;
 const SESSION_DAYS = 400;
 const MAX_BODY = 900 * 1024;
@@ -259,6 +261,13 @@ export default {
         if (!(await isAuthed(request, env.DB))) return fail(401, "unauthorized");
         if (!env.BINVIO) return fail(503, "binvio_not_connected");
         return json(await binvioSummary(env.BINVIO));
+      }
+      if (route === "ai") {
+        if (request.method !== "POST") return fail(405, "method_not_allowed");
+        if (!(await isAuthed(request, env.DB))) return fail(401, "unauthorized");
+        let body;
+        try { body = await readJson(request); } catch { return fail(400, "bad_request"); }
+        return await handleAi(body, env, json, fail, env.BINVIO ? () => binvioSummary(env.BINVIO) : null);
       }
       return fail(404, "not_found");
     } catch (e) {
